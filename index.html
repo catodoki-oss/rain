@@ -480,6 +480,137 @@ header h1{font-size:.95rem;font-weight:bold;}
 
 <script>
 /* ════════════════════════════════════════
+   인앱 브라우저 감지 → 크롬 강제 리다이렉트
+   카카오톡·네이버·라인 등 인앱 브라우저에서
+   파일 선택 후 페이지가 초기화되는 문제 방지
+════════════════════════════════════════ */
+(function() {
+  var ua = navigator.userAgent || '';
+  var isAndroid = /android/i.test(ua);
+  var isIOS     = /iphone|ipad|ipod/i.test(ua);
+
+  /* 인앱 브라우저 여부 판단 */
+  var isInApp = (
+    /KAKAOTALK/i.test(ua) ||          // 카카오톡
+    /NAVER\(inapp/i.test(ua) ||       // 네이버 앱
+    /Instagram/i.test(ua) ||          // 인스타그램
+    /FB_IAB|FBAN|FBAV/i.test(ua) ||   // 페이스북
+    /Line\/\d/i.test(ua) ||           // 라인
+    /Twitter/i.test(ua) ||            // 트위터
+    /Snapchat/i.test(ua) ||           // 스냅챗
+    /* 크롬이 아닌 안드로이드 웹뷰 */
+    (isAndroid && /wv\)/i.test(ua) && !/Chrome\/[0-9]+/.test(ua))
+  );
+
+  if (isInApp) {
+    var currentUrl = location.href;
+
+    if (isAndroid) {
+      /* 안드로이드: intent 스킴으로 크롬 강제 실행 */
+      var intentUrl = 'intent://'
+        + currentUrl.replace(/^https?:\/\//, '')
+        + '#Intent;scheme=https;package=com.android.chrome;end';
+      location.href = intentUrl;
+
+      /* intent 실패 대비: 1.5초 후 크롬 플레이스토어로 안내 */
+      setTimeout(function() {
+        if (document.hidden) return; /* intent 성공하면 앱 전환됨 */
+        showInAppGuide();
+      }, 1500);
+
+    } else if (isIOS) {
+      /* iOS: 직접 리다이렉트가 안 되므로 안내 화면 표시 */
+      showInAppGuide();
+    } else {
+      showInAppGuide();
+    }
+  }
+
+  function showInAppGuide() {
+    document.addEventListener('DOMContentLoaded', function() {
+      var overlay = document.createElement('div');
+      overlay.id = 'inappGuide';
+      overlay.style.cssText = [
+        'position:fixed', 'inset:0', 'z-index:9999',
+        'background:linear-gradient(135deg,#1a56db,#0e3a8a)',
+        'display:flex', 'flex-direction:column',
+        'align-items:center', 'justify-content:center',
+        'padding:28px', 'text-align:center'
+      ].join(';');
+
+      overlay.innerHTML = [
+        '<div style="font-size:3.5rem;margin-bottom:16px;">🌧️</div>',
+        '<div style="color:#fff;font-size:1.15rem;font-weight:bold;margin-bottom:8px;">',
+          '카카오톡 브라우저에서는<br>사진 기능이 제한됩니다',
+        '</div>',
+        '<div style="color:rgba(255,255,255,.85);font-size:.9rem;line-height:1.8;margin-bottom:28px;">',
+          '아래 방법으로 <strong style="color:#fbbf24">크롬(Chrome)</strong>에서<br>열어주세요.',
+        '</div>',
+
+        /* 안드로이드 안내 */
+        '<div style="background:rgba(255,255,255,.15);border-radius:14px;padding:18px 20px;width:100%;max-width:340px;margin-bottom:16px;">',
+          '<div style="color:#fbbf24;font-weight:bold;font-size:.9rem;margin-bottom:10px;">📱 안드로이드</div>',
+          '<div style="color:#fff;font-size:.85rem;line-height:2;text-align:left;">',
+            '① 화면 우측 상단 <strong>⋮</strong> (더보기) 탭<br>',
+            '② <strong>"다른 브라우저로 열기"</strong> 선택<br>',
+            '③ <strong>크롬(Chrome)</strong> 선택',
+          '</div>',
+        '</div>',
+
+        /* iOS 안내 */
+        '<div style="background:rgba(255,255,255,.15);border-radius:14px;padding:18px 20px;width:100%;max-width:340px;margin-bottom:24px;">',
+          '<div style="color:#fbbf24;font-weight:bold;font-size:.9rem;margin-bottom:10px;">🍎 아이폰(iOS)</div>',
+          '<div style="color:#fff;font-size:.85rem;line-height:2;text-align:left;">',
+            '① 화면 우측 하단 <strong>⋯</strong> 탭<br>',
+            '② <strong>"Safari로 열기"</strong> 또는<br>',
+            '&nbsp;&nbsp;&nbsp;<strong>"기본 브라우저로 열기"</strong> 선택',
+          '</div>',
+        '</div>',
+
+        /* URL 복사 버튼 */
+        '<button onclick="copyUrlAndGuide()" style="',
+          'background:#fbbf24;color:#1e3a8a;border:none;',
+          'padding:14px 28px;border-radius:30px;',
+          'font-size:1rem;font-weight:bold;cursor:pointer;',
+          'box-shadow:0 4px 14px rgba(0,0,0,.25);',
+          'width:100%;max-width:340px;',
+        '">📋 주소 복사 후 크롬에서 열기</button>',
+
+        '<div id="copyDone" style="color:#a7f3d0;font-size:.82rem;margin-top:10px;min-height:20px;"></div>'
+      ].join('');
+
+      document.body.appendChild(overlay);
+    });
+  }
+})();
+
+function copyUrlAndGuide() {
+  var url = location.href;
+  var done = document.getElementById('copyDone');
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      if(done) done.textContent = '✅ 주소가 복사되었습니다! 크롬을 열고 붙여넣기 해주세요.';
+    }).catch(function() { fallbackCopy(url, done); });
+  } else {
+    fallbackCopy(url, done);
+  }
+}
+function fallbackCopy(url, done) {
+  var ta = document.createElement('textarea');
+  ta.value = url;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try {
+    document.execCommand('copy');
+    if(done) done.textContent = '✅ 주소가 복사되었습니다! 크롬을 열고 붙여넣기 해주세요.';
+  } catch(e) {
+    if(done) done.textContent = '⚠️ 복사 실패: 주소창의 URL을 직접 복사해 주세요.';
+  }
+  document.body.removeChild(ta);
+}
+
+/* ════════════════════════════════════════
    Firebase + Cloudinary 설정
 ════════════════════════════════════════ */
 var firebaseConfig = {
