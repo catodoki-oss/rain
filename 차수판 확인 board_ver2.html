@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>화성시 침수방지시설·차수판 현장점검 시스템</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Malgun Gothic','맑은 고딕',sans-serif; background:#f0f4f8; color:#2d3748; }
+
+/* ── 헤더 ── */
+header {
+  background: linear-gradient(135deg,#1a56db,#0e3a8a);
+  color:#fff; padding:14px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+header h1 { font-size:1.05rem; display:flex; align-items:center; gap:8px; }
+.badge { background:#f6ad55; color:#1a202c; font-size:.68rem; padding:2px 8px; border-radius:12px; font-weight:bold; }
+.header-right { display:flex; align-items:center; gap:10px; font-size:.82rem; }
+#currentUserDisplay { background:rgba(255,255,255,.2); padding:3px 12px; border-radius:20px; }
+
+/* ── 탭 ── */
+.tab-nav {
+  display:flex; background:#fff;
+  border-bottom:2px solid #e2e8f0;
+  overflow-x:auto; position:sticky; top:52px; z-index:99;
+}
+.tab-btn {
+  padding:12px 18px; border:none; background:none; cursor:pointer;
+  font-size:.88rem; color:#718096; white-space:nowrap;
+  border-bottom:3px solid transparent; transition:all .2s;
+}
+.tab-btn.active { color:#1a56db; border-bottom-color:#1a56db; font-weight:bold; }
+.tab-btn:hover { background:#f7fafc; }
+
+/* ── 컨테이너 ── */
+.container { max-width:1200px; margin:0 auto; padding:18px 14px; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ── 카드 ── */
+.card {
+  background:#fff; border-radius:12px; padding:18px;
+  margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08);
+  border:1px solid #e2e8f0;
+}
+.card-title { font-size:.95rem; font-weight:bold; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+
+/* ── 현장 그리드 ── */
+.site-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:12px; }
+.site-card {
+  border:2px solid #e2e8f0; border-radius:10px; padding:14px;
+  cursor:pointer; transition:all .2s; background:#fff;
+}
+.site-card:hover { border-color:#1a56db; transform:translateY(-2px); box-shadow:0 4px 12px rgba(26,86,219,.15); }
+.site-card.completed { border-color:#48bb78; background:#f0fff4; }
+.site-card.in-progress { border-color:#f6ad55; background:#fffaf0; }
+.site-card.has-issue { border-color:#fc8181; background:#fff5f5; }
+.site-name { font-weight:bold; font-size:.92rem; margin-bottom:4px; }
+.site-meta { font-size:.76rem; color:#718096; margin-bottom:4px; line-height:1.5; }
+.dual-badge { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+.tag {
+  font-size:.68rem; padding:2px 8px; border-radius:10px; font-weight:bold;
+}
+.tag-alarm { background:#dbeafe; color:#1e40af; }
+.tag-water { background:#d1fae5; color:#065f46; }
+.tag-both  { background:#ede9fe; color:#5b21b6; }
+.site-status { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:20px; font-size:.74rem; font-weight:bold; }
+.s-wait { background:#e2e8f0; color:#4a5568; }
+.s-prog { background:#fef3c7; color:#92400e; }
+.s-done { background:#d1fae5; color:#065f46; }
+.s-issue{ background:#fee2e2; color:#991b1b; }
+.progress-bar-wrap { margin-top:8px; background:#e2e8f0; border-radius:4px; height:5px; }
+.progress-bar { height:5px; border-radius:4px; background:#48bb78; transition:width .3s; }
+
+/* ── 점검표 모달 ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); z-index:200;
+  overflow-y:auto; padding:16px;
+}
+.modal-overlay.open { display:flex; align-items:flex-start; justify-content:center; }
+.modal {
+  background:#fff; border-radius:14px;
+  width:100%; max-width:760px; margin:auto; overflow:hidden;
+}
+.modal-header {
+  background:linear-gradient(135deg,#1a56db,#0e3a8a);
+  color:#fff; padding:16px 18px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.modal-header h2 { font-size:.95rem; }
+.modal-close {
+  background:rgba(255,255,255,.2); border:none; color:#fff;
+  width:26px; height:26px; border-radius:50%; cursor:pointer;
+  font-size:.9rem; display:flex; align-items:center; justify-content:center;
+}
+.modal-body { padding:18px; max-height:78vh; overflow-y:auto; }
+.modal-footer {
+  padding:12px 18px; border-top:1px solid #e2e8f0;
+  display:flex; gap:8px; justify-content:flex-end;
+}
+
+/* ── 점검 항목 ── */
+.section-divider {
+  background:#edf2f7; border-radius:8px; padding:8px 14px;
+  font-size:.82rem; font-weight:bold; color:#2d3748;
+  margin:14px 0 8px; display:flex; align-items:center; gap:6px;
+}
+.checklist-item {
+  display:flex; align-items:flex-start; padding:12px 0;
+  border-bottom:1px solid #f0f4f8; gap:10px;
+}
+.checklist-item:last-child { border-bottom:none; }
+.check-num {
+  min-width:26px; height:26px; background:#1a56db; color:#fff;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:.72rem; font-weight:bold;
+}
+.check-content { flex:1; }
+.check-label { font-size:.88rem; font-weight:500; margin-bottom:6px; }
+.check-desc { font-size:.75rem; color:#718096; margin-bottom:8px; }
+.check-buttons { display:flex; gap:6px; flex-wrap:wrap; }
+.btn-check {
+  padding:5px 14px; border:2px solid #e2e8f0; border-radius:6px;
+  cursor:pointer; font-size:.78rem; font-weight:bold; transition:all .15s; background:#fff;
+}
+.btn-check.ok  { border-color:#48bb78; color:#48bb78; }
+.btn-check.ok.selected  { background:#48bb78; color:#fff; }
+.btn-check.ng  { border-color:#fc8181; color:#fc8181; }
+.btn-check.ng.selected  { background:#fc8181; color:#fff; }
+.btn-check.na  { border-color:#a0aec0; color:#a0aec0; }
+.btn-check.na.selected  { background:#a0aec0; color:#fff; }
+.check-memo {
+  width:100%; margin-top:6px; padding:6px 10px;
+  border:1px solid #e2e8f0; border-radius:6px;
+  font-size:.78rem; resize:vertical; min-height:44px;
+}
+
+/* ── 사진 ── */
+.photo-upload-area {
+  border:2px dashed #a0aec0; border-radius:10px; padding:20px;
+  text-align:center; cursor:pointer; transition:all .2s; background:#f7fafc;
+}
+.photo-upload-area:hover { border-color:#1a56db; background:#ebf4ff; }
+.photo-upload-area input { display:none; }
+.photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:12px; }
+.photo-item { position:relative; border-radius:8px; overflow:hidden; aspect-ratio:1; border:2px solid #e2e8f0; }
+.photo-item img { width:100%; height:100%; object-fit:cover; cursor:zoom-in; }
+.photo-del {
+  position:absolute; top:3px; right:3px;
+  background:rgba(0,0,0,.6); color:#fff; border:none;
+  border-radius:50%; width:20px; height:20px; cursor:pointer;
+  font-size:.65rem; display:flex; align-items:center; justify-content:center;
+}
+.photo-caption {
+  position:absolute; bottom:0; left:0; right:0;
+  background:rgba(0,0,0,.55); color:#fff; font-size:.64rem; padding:2px 5px; text-align:center;
+}
+
+/* ── 버튼 ── */
+.btn { padding:9px 18px; border:none; border-radius:8px; cursor:pointer; font-size:.88rem; font-weight:bold; transition:all .2s; }
+.btn-primary  { background:#1a56db; color:#fff; }
+.btn-primary:hover  { background:#1e40af; }
+.btn-success  { background:#48bb78; color:#fff; }
+.btn-success:hover  { background:#38a169; }
+.btn-secondary{ background:#e2e8f0; color:#4a5568; }
+.btn-secondary:hover{ background:#cbd5e0; }
+.btn-sm { padding:5px 11px; font-size:.76rem; }
+
+/* ── 담당자 테이블 ── */
+.data-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+.data-table th { background:#edf2f7; padding:9px 11px; text-align:left; font-weight:bold; border-bottom:2px solid #e2e8f0; }
+.data-table td { padding:9px 11px; border-bottom:1px solid #f0f4f8; vertical-align:middle; }
+.data-table tr:hover td { background:#f7fafc; }
+.data-table tr.clickable { cursor:pointer; }
+.data-table tr.clickable:hover td { background:#ebf4ff; }
+
+/* ── 보고서 요약 ── */
+.report-summary { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-bottom:18px; }
+.summary-box { text-align:center; padding:14px; border-radius:10px; border:2px solid #e2e8f0; }
+.summary-box .num { font-size:1.9rem; font-weight:bold; }
+.summary-box .lbl { font-size:.76rem; color:#718096; margin-top:3px; }
+.sb-blue   { border-color:#90cdf4; background:#ebf8ff; } .sb-blue .num   { color:#2b6cb0; }
+.sb-green  { border-color:#9ae6b4; background:#f0fff4; } .sb-green .num  { color:#276749; }
+.sb-red    { border-color:#feb2b2; background:#fff5f5; } .sb-red .num    { color:#9b2c2c; }
+.sb-yellow { border-color:#fbd38d; background:#fffff0; } .sb-yellow .num { color:#7b341e; }
+.sb-purple { border-color:#d6bcfa; background:#faf5ff; } .sb-purple .num { color:#553c9a; }
+
+/* ── 상세 팝업 ── */
+#detailModal .modal { max-width:820px; }
+.detail-check-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+.detail-check-item {
+  padding:8px 12px; border-radius:8px; font-size:.8rem;
+  border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:3px;
+}
+.detail-check-item.ok   { background:#f0fff4; border-color:#9ae6b4; }
+.detail-check-item.ng   { background:#fff5f5; border-color:#feb2b2; }
+.detail-check-item.na   { background:#f7fafc; border-color:#e2e8f0; }
+.detail-check-item .ci-label { font-weight:bold; }
+.detail-check-item .ci-memo  { color:#718096; font-size:.74rem; }
+.photo-dl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; margin-top:10px; }
+.photo-dl-item { position:relative; border-radius:8px; overflow:hidden; border:2px solid #e2e8f0; }
+.photo-dl-item img { width:100%; aspect-ratio:1; object-fit:cover; cursor:zoom-in; }
+.photo-dl-btn {
+  position:absolute; bottom:0; left:0; right:0;
+  background:rgba(26,86,219,.85); color:#fff; border:none;
+  padding:5px; font-size:.68rem; cursor:pointer; text-align:center;
+}
+.photo-dl-caption { background:#f7fafc; font-size:.66rem; padding:3px 6px; color:#718096; text-align:center; }
+
+/* ── 정보 박스 ── */
+.info-box { background:#ebf8ff; border-left:4px solid #1a56db; padding:9px 13px; border-radius:0 8px 8px 0; font-size:.8rem; color:#2b6cb0; margin-bottom:12px; }
+.warn-box { background:#fffbeb; border-left:4px solid #f6ad55; padding:9px 13px; border-radius:0 8px 8px 0; font-size:.8rem; color:#92400e; margin-bottom:12px; }
+
+/* ── 로그인 ── */
+#loginScreen {
+  position:fixed; inset:0;
+  background:linear-gradient(135deg,#1a56db,#0e3a8a);
+  display:flex; align-items:center; justify-content:center; z-index:500;
+}
+.login-box {
+  background:#fff; border-radius:16px; padding:32px 28px;
+  width:360px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.25);
+}
+.login-box h2 { color:#1a56db; margin-bottom:4px; font-size:1.2rem; }
+.login-box p  { color:#718096; font-size:.82rem; margin-bottom:20px; }
+.login-box select, .login-box input {
+  width:100%; padding:9px 13px; border:2px solid #e2e8f0;
+  border-radius:8px; font-size:.88rem; margin-bottom:10px;
+}
+.login-box select:focus, .login-box input:focus { outline:none; border-color:#1a56db; }
+.login-section-label { font-size:.78rem; color:#718096; text-align:left; margin-bottom:4px; margin-top:6px; font-weight:bold; }
+
+/* ── 토스트 ── */
+#toast {
+  position:fixed; bottom:22px; left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:#2d3748; color:#fff; padding:10px 22px;
+  border-radius:30px; font-size:.84rem; z-index:999;
+  transition:transform .3s; white-space:nowrap;
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── 필터 바 ── */
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+.filter-bar select, .filter-bar input {
+  padding:6px 11px; border:1px solid #e2e8f0; border-radius:8px; font-size:.82rem;
+}
+
+@media(max-width:600px){
+  header h1 { font-size:.9rem; }
+  .tab-btn { padding:9px 11px; font-size:.78rem; }
+  .detail-check-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     로그인 화면
+══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:2.2rem;margin-bottom:10px;">🌧️</div>
+    <h2>침수방지 현장점검 시스템</h2>
+    <p>화성시 건축과 · 구청 도시건축과</p>
+
+    <div class="login-section-label">▸ 소속 구분</div>
+    <select id="loginOrg" onchange="updateOrgFields()">
+      <option value="">소속 구분 선택</option>
+      <option value="본청">본청 (건축과)</option>
+      <option value="만세구청">만세구청</option>
+      <option value="효행구청">효행구청</option>
+      <option value="병점구청">병점구청</option>
+    </select>
+
+    <div id="deptField" style="display:none">
+      <div class="login-section-label">▸ 과 / 팀</div>
+      <select id="loginDept"></select>
+      <select id="loginTeam" style="margin-top:6px;"></select>
+    </div>
+
+    <div class="login-section-label">▸ 이름</div>
+    <input type="text" id="loginName" placeholder="이름 입력 (예: 홍길동)" maxlength="10">
+
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="doLogin()">
+      🔐 점검 시스템 입장
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     헤더
+══════════════════════════════════════════ -->
+<header>
+  <h1>🌧️ 화성시 침수방지시설·차수판 현장점검 <span class="badge">건축과</span></h1>
+  <div class="header-right">
+    <span id="currentUserDisplay">로그인 중...</span>
+    <span id="liveTime" style="font-size:.76rem;opacity:.8;"></span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     탭 네비게이션
+══════════════════════════════════════════ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('tab-sites',this)">🏘️ 현장 목록</button>
+  <button class="tab-btn" onclick="showTab('tab-assign',this)">👤 담당자 배정</button>
+  <button class="tab-btn" onclick="showTab('tab-report',this)">📊 결과 보고서</button>
+  <button class="tab-btn" onclick="showTab('tab-guide',this)">📖 사용 안내</button>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     메인 컨테이너
+══════════════════════════════════════════ -->
+<div class="container">
+
+<!-- ── TAB 1: 현장 목록 ── -->
+<div id="tab-sites" class="tab-content active">
+  <div class="card">
+    <div class="card-title">🏘️ 침수방지시설 · 차수판 설치 현장
+      <span id="siteCountBadge" style="margin-left:auto;font-size:.78rem;color:#718096;"></span>
+    </div>
+    <div class="filter-bar">
+      <select id="filterDong" onchange="renderSiteGrid()">
+        <option value="">전체 지역</option>
+        <option>반월동</option><option>병점동</option><option>진안동</option>
+        <option>화산동</option><option>안녕동</option><option>매송면</option>
+        <option>마도면</option><option>봉담읍</option><option>송산면</option>
+        <option>향남읍</option>
+      </select>
+      <select id="filterStatus" onchange="renderSiteGrid()">
+        <option value="">전체 상태</option>
+        <option value="waiting">대기</option>
+        <option value="progress">진행중</option>
+        <option value="done">완료</option>
+        <option value="issue">부적합</option>
+      </select>
+      <select id="filterType" onchange="renderSiteGrid()">
+        <option value="">전체 시설</option>
+        <option value="alarm">침수방지시설만</option>
+        <option value="water">차수판만</option>
+        <option value="both">중복설치</option>
+      </select>
+      <input type="text" id="filterSearch" placeholder="🔍 주소·현장명 검색" oninput="renderSiteGrid()" style="min-width:160px;">
+    </div>
+    <div class="info-box">
+      📌 현장 카드를 클릭하면 점검표가 열립니다. <strong>보라색 태그(중복)</strong>는 침수방지시설+차수판이 함께 설치된 현장입니다.
+    </div>
+    <div class="site-grid" id="siteGrid"></div>
+  </div>
+</div>
+
+<!-- ── TAB 2: 담당자 배정 ── -->
+<div id="tab-assign" class="tab-content">
+  <div class="card">
+    <div class="card-title">👤 현장별 담당자 배정 현황</div>
+    <div class="info-box">📌 [내가 맡기] 버튼으로 담당을 등록하세요. 본청 건축과 소속은 모든 현장 담당자를 변경할 수 있습니다.</div>
+    <table class="data-table" id="assignTable">
+      <thead>
+        <tr><th>연번</th><th>지역</th><th>주소</th><th>시설유형</th><th>담당자</th><th>소속/팀</th><th>상태</th><th>관리</th></tr>
+      </thead>
+      <tbody id="assignTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── TAB 3: 결과 보고서 ── -->
+<div id="tab-report" class="tab-content">
+  <div class="card">
+    <div class="card-title">📊 전체 점검 결과 요약</div>
+    <div class="report-summary" id="reportSummary"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 현장별 점검 결과 상세
+      <span style="font-size:.74rem;color:#718096;margin-left:8px;">※ 행 클릭 시 세부 내용 팝업</span>
+    </div>
+    <div id="reportDetail"></div>
+  </div>
+  <div style="text-align:right;margin-top:8px;">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ 보고서 인쇄 / PDF</button>
+  </div>
+</div>
+
+<!-- ── TAB 4: 사용 안내 ── -->
+<div id="tab-guide" class="tab-content">
+  <div class="card">
+    <div class="card-title">📖 시스템 사용 안내</div>
+    <div style="line-height:2;font-size:.88rem;">
+      <p><strong>🔵 점검 순서</strong></p>
+      <ol style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
+        <li>로그인 → 소속 구분·과·팀·이름 입력</li>
+        <li>[현장 목록] 탭 → 내 담당 현장 확인 (파란 "내 담당" 태그)</li>
+        <li>현장 카드 클릭 → 점검표 팝업 오픈</li>
+        <li>침수방지시설 / 차수판 항목별 <strong>✅ 적합 / ❌ 부적합 / ➖ 해당없음</strong> 선택</li>
+        <li>현장 사진 업로드 (드래그&드롭 가능)</li>
+        <li>[점검 완료 저장] 클릭</li>
+        <li>[결과 보고서] 탭 → 행 클릭 → 세부 팝업 확인 및 사진 다운로드</li>
+      </ol>
+      <p><strong>🟣 중복설치 현장 안내</strong></p>
+      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
+        <li>침수방지시설과 차수판이 모두 설치된 현장은 <span class="tag tag-both">중복설치</span> 태그로 표시</li>
+        <li>점검표에 두 시설 항목이 모두 포함되어 한 번에 점검 가능</li>
+      </ul>
+      <p><strong>🔴 주의사항</strong></p>
+      <ul style="margin-left:18px;margin-top:6px;">
+        <li>부적합 항목 발견 시 메모란에 사유 필수 기재</li>
+        <li>사진은 시설 전체가 보이도록 촬영</li>
+        <li>비 오는 날 스마트폰 방수 처리 후 사용</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ══════════════════════════════════════════
+     점검표 모달
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="checkModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">현장 점검표</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
+      <button class="btn btn-success" onclick="saveInspection()">💾 점검 완료 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     담당자 변경 모달
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>담당자 변경</h2>
+      <button class="modal-close" onclick="closeAssignModal()">✕</button>
+    </div>
+    <div class="modal-body" id="assignModalContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAssignModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveAssign()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     세부 결과 팝업 (보고서 클릭)
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:840px;">
+    <div class="modal-header">
+      <h2 id="detailModalTitle">점검 세부 결과</h2>
+      <button class="modal-close" onclick="document.getElementById('detailModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="detailModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('open')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div id="toast"></div>
+<script>
+/* ══════════════════════════════════════════
+   1. 조직 구조
+══════════════════════════════════════════ */
+const ORG = {
+  "본청": {
+    depts: ["건축과"],
+    teams: {
+      "건축과": ["건축정책팀","건축허가팀","건축지원팀","건축안전팀","광고물관리팀"]
+    }
+  },
+  "만세구청": {
+    depts: ["도시건축과","현장민원실"],
+    teams: {
+      "도시건축과": ["건축행정팀","건축민원팀","건축관리팀"],
+      "현장민원실": ["건축행정팀","건축민원팀","건축관리팀"]
+    }
+  },
+  "효행구청": {
+    depts: ["도시건축과","현장민원실"],
+    teams: {
+      "도시건축과": ["건축행정팀","건축민원팀","건축관리팀"],
+      "현장민원실": ["건축행정팀","건축민원팀","건축관리팀"]
+    }
+  },
+  "병점구청": {
+    depts: ["도시건축과","현장민원실"],
+    teams: {
+      "도시건축과": ["건축행정팀","건축민원팀","건축관리팀"],
+      "현장민원실": ["건축행정팀","건축민원팀","건축관리팀"]
+    }
+  }
+};
+
+function updateOrgFields() {
+  const org = document.getElementById('loginOrg').value;
+  const deptField = document.getElementById('deptField');
+  if (!org) { deptField.style.display='none'; return; }
+  deptField.style.display='block';
+  const deptSel = document.getElementById('loginDept');
+  const teamSel = document.getElementById('loginTeam');
+  deptSel.innerHTML = '<option value="">과 선택</option>' +
+    ORG[org].depts.map(d=>`<option>${d}</option>`).join('');
+  teamSel.innerHTML = '<option value="">팀 선택</option>';
+  deptSel.onchange = () => {
+    const dept = deptSel.value;
+    const teams = (ORG[org].teams[dept]||[]);
+    teamSel.innerHTML = '<option value="">팀 선택</option>' +
+      teams.map(t=>`<option>${t}</option>`).join('');
+  };
+}
+
+/* ══════════════════════════════════════════
+   2. 현장 데이터 (침수방지시설 + 차수판)
+══════════════════════════════════════════ */
+
+// 침수방지시설 원본
+const ALARM_SITES_RAW = [
+  {no:1, dong:"병점동", addr:"화성시 병점3로 45-10, B101~5호"},
+  {no:2, dong:"병점동", addr:"화성시 떡전골로 55-2, 청록주택 102동 B101호"},
+  {no:3, dong:"병점동", addr:"화성시 태안로95번길 28-3, 가동 B102호"},
+  {no:4, dong:"병점동", addr:"화성시 태안로95번길 28-5, 동원빌라 나동 B102호"},
+  {no:5, dong:"병점동", addr:"화성시 태안로95번길 28-9, 동성빌라 나동 B101호"},
+  {no:6, dong:"병점동", addr:"화성시 태안로95번길 28-11, 동성빌라 가동 B101호"},
+  {no:7, dong:"병점동", addr:"화성시 떡전골로 53-4, 청록빌라 가동 B101호"},
+  {no:8, dong:"병점동", addr:"화성시 떡전골로 55-4, 101동 B101호"},
+  {no:9, dong:"병점동", addr:"화성시 태안로95번길 28-17, 다동 지층 101호·B102호"},
+  {no:10, dong:"진안동", addr:"화성시 태안로226번길 28, 신세계빌라 6동 B04호"},
+  {no:11, dong:"진안동", addr:"화성시 병점동로164번길 8, 화인빌라 101·2·3·4호"},
+  {no:12, dong:"진안동", addr:"화성시 태안로226번길 22-5, 2동 B101~4호"},
+  {no:13, dong:"진안동", addr:"화성시 태안로226번길 22-6, 유신 A동 B101호"},
+  {no:14, dong:"진안동", addr:"화성시 태안로 210-9, 유림연립 101호"},
+  {no:15, dong:"진안동", addr:"화성시 태안로 210-11, 유림연립 102호"},
+  {no:16, dong:"진안동", addr:"화성시 태안로 220-2, 서울아트빌라 6동 B02호"},
+  {no:17, dong:"진안동", addr:"화성시 태안로 222, 서울아트빌라 5동 B101호·B02호"},
+  {no:18, dong:"안녕동", addr:"화성시 안녕동 122-6 산성빌라 D동 B02호"},
+  {no:19, dong:"매송면", addr:"화성시 매송면 매송고색로375번길 9-7, 대우빌라 104동 B01호"},
+  {no:20, dong:"마도면", addr:"화성시 마도면 두곡서길 24, 시흥주택 마도빌라 가동 B02호"},
+  {no:21, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 12-2, B동 B01호"},
+  {no:22, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 10-4, 2동 B01호"},
+  {no:23, dong:"봉담읍", addr:"화성시 봉담읍 독정안길 15-2, 육삼빌라 2동 B02호"},
+  {no:24, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 12-4, 한일빌라 C동 B02호·B01호"},
+  {no:25, dong:"봉담읍", addr:"화성시 봉담읍 독정안길 15-1, 육삼빌라 1동 B02호·B101호"},
+  {no:26, dong:"송산면", addr:"화성시 송산면 송산포도로 155-4, 복성빌라 3동 B02호·B01호"},
+  {no:27, dong:"송산면", addr:"화성시 송산면 송산포도로 155-4, 복성빌라 A동 B02호"},
+  {no:28, dong:"향남읍", addr:"화성시 향남읍 서낭목길 69-5, 대풍빌라 나동 102호"},
+  {no:29, dong:"향남읍", addr:"화성시 향남읍 발안남로25번길 3, 동광빌라 2동 B101호"},
+];
+
+// 차수판 원본
+const WATER_SITES_RAW = [
+  {no:1,  dong:"반월동", addr:"화성시 영통로 8번길 18 영진빌라 B동 101호"},
+  {no:2,  dong:"병점동", addr:"화성시 태안로95번길 18-13 보성빌라 나동 102호"},
+  {no:3,  dong:"병점동", addr:"화성시 병점3로 45-10 B01호"},
+  {no:4,  dong:"병점동", addr:"화성시 병점3로 45-10 B02호"},
+  {no:5,  dong:"병점동", addr:"화성시 병점3로 45-10 B03호"},
+  {no:6,  dong:"병점동", addr:"화성시 병점3로 45-10 B04호"},
+  {no:7,  dong:"병점동", addr:"화성시 병점3로 45-10 B05호"},
+  {no:8,  dong:"병점동", addr:"화성시 떡전골로 55-2 청록빌라 102동 B101호"},
+  {no:9,  dong:"병점동", addr:"화성시 태안로95번길 28-9 동성빌라 나동 B101호"},
+  {no:10, dong:"화산동", addr:"화성시 만년로915번길 21-5 산성빌라 D동 B02호"},
+  {no:11, dong:"진안동", addr:"화성시 병점동로164번길 8 화인빌라 101호"},
+  {no:12, dong:"진안동", addr:"화성시 병점동로164번길 8 화인빌라 102호"},
+  {no:13, dong:"진안동", addr:"화성시 병점동로164번길 8 화인빌라 103호"},
+  {no:14, dong:"진안동", addr:"화성시 병점동로164번길 8 화인빌라 104호"},
+  {no:15, dong:"진안동", addr:"화성시 태안로226번길 28 신세계빌라 6동 B04호"},
+  {no:16, dong:"진안동", addr:"화성시 태안로226번길 28 신세계빌라 6동 B01호"},
+  {no:17, dong:"진안동", addr:"화성시 태안로226번길 28 신세계빌라 6동 B02호"},
+  {no:18, dong:"진안동", addr:"화성시 태안로226번길 28 신세계빌라아파트 6동 B03호"},
+  {no:19, dong:"매송면", addr:"화성시 매송면 화성로2397번길 27-2 대성하이츠빌라 106동 B01호"},
+  {no:20, dong:"매송면", addr:"화성시 매송면 매송고색로375번길 9-5 대우빌라 104동 B01호"},
+  {no:21, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 12-4 한일빌라 C동 B02호"},
+  {no:22, dong:"봉담읍", addr:"화성시 봉담읍 독정안길 15-1 육삼빌라 1동 B02호"},
+  {no:23, dong:"봉담읍", addr:"화성시 봉담읍 독정안길 15-1 육삼빌라 2동 B02호"},
+  {no:24, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 12-4 한일빌라 C동 B01호"},
+  {no:25, dong:"봉담읍", addr:"화성시 봉담읍 동화북길 49-2 광성빌라 A동 B01호"},
+  {no:26, dong:"봉담읍", addr:"화성시 봉담읍 동화북길 49-2 광성빌라 A동 B02호"},
+  {no:27, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 10-2 B101"},
+  {no:28, dong:"봉담읍", addr:"화성시 봉담읍 북촌길 10-2 B102"},
+  {no:29, dong:"송산면", addr:"화성시 송산면 송산포도로 155-1 복성빌라 지하동 102호"},
+  {no:30, dong:"송산면", addr:"화성시 송산면 송산포도로 155-1 복성빌라 3동 B02호"},
+  {no:31, dong:"향남읍", addr:"화성시 향남읍 서낭목길 69-3 대풍빌라 나동 102호"},
+  {no:32, dong:"향남읍", addr:"화성시 향남읍 발안남로25번길 1 동광빌라 2동 B01호"},
+  {no:33, dong:"향남읍", addr:"화성시 향남읍 서해로 430-7 부광빌라 A동 B01호"},
+  {no:34, dong:"향남읍", addr:"화성시 향남읍 서해로 430-7 부광빌라 A동 B02호"},
+  {no:35, dong:"향남읍", addr:"화성시 향남읍 서해로 430-5 부광빌라 C동 B02호"},
+];
+
+/* ── 중복 판정 & 통합 현장 목록 생성 ── */
+function normalizeAddr(a) {
+  return a.replace(/\s+/g,'').replace(/,/g,'').toLowerCase();
+}
+function addrMatch(a, b) {
+  const na = normalizeAddr(a), nb = normalizeAddr(b);
+  // 완전 일치 또는 한 쪽이 다른 쪽을 포함
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+let SITES = [];
+let siteIdCounter = 1;
+
+function buildSites() {
+  const used_alarm = new Set();
+  const used_water = new Set();
+
+  // 1) 중복 먼저 처리
+  ALARM_SITES_RAW.forEach((a, ai) => {
+    WATER_SITES_RAW.forEach((w, wi) => {
+      if (addrMatch(a.addr, w.addr)) {
+        used_alarm.add(ai); used_water.add(wi);
+        SITES.push({
+          id: siteIdCounter++,
+          dong: a.dong,
+          addr: a.addr,
+          type: 'both',
+          alarmNo: a.no, waterNo: w.no,
+          assignee:'', org:'', dept:'', team:'',
+        });
+      }
+    });
+  });
+
+  // 2) 침수방지시설만
+  ALARM_SITES_RAW.forEach((a, ai) => {
+    if (!used_alarm.has(ai)) {
+      SITES.push({
+        id: siteIdCounter++,
+        dong: a.dong, addr: a.addr,
+        type: 'alarm', alarmNo: a.no,
+        assignee:'', org:'', dept:'', team:'',
+      });
+    }
+  });
+
+  // 3) 차수판만
+  WATER_SITES_RAW.forEach((w, wi) => {
+    if (!used_water.has(wi)) {
+      SITES.push({
+        id: siteIdCounter++,
+        dong: w.dong, addr: w.addr,
+        type: 'water', waterNo: w.no,
+        assignee:'', org:'', dept:'', team:'',
+      });
+    }
+  });
+}
+buildSites();
+
+/* ══════════════════════════════════════════
+   3. 점검 항목 정의
+══════════════════════════════════════════ */
+const ALARM_CHECKS = [
+  {id:'a1', label:'침수방지시설 설치 위치 확인', desc:'출입구·창문·환기구 등 지정 위치에 정위치 설치 여부 확인'},
+  {id:'a2', label:'침수방지시설 고정 상태', desc:'볼트·클램프 등 고정장치 완전 체결 여부 확인'},
+  {id:'a3', label:'침수방지시설 본체 변형·파손', desc:'균열·변형·부식 등 손상 여부 육안 점검'},
+  {id:'a4', label:'밀봉 패킹 상태', desc:'하단·측면 고무 패킹 밀착 및 노화·손상 여부'},
+  {id:'a5', label:'침수 감지 센서 작동', desc:'자동 침수 감지 센서 전원 및 알람 작동 여부'},
+  {id:'a6', label:'역류방지 밸브 상태', desc:'하수구 역류방지 밸브 설치 및 정상 작동 여부'},
+  {id:'a7', label:'배수 펌프 작동 여부', desc:'지하층 배수 펌프 전원 및 작동 상태 확인'},
+  {id:'a8', label:'주변 배수로 막힘 여부', desc:'건물 주변 배수로·우수관 입구 낙엽·쓰레기 막힘 확인 및 제거'},
+  {id:'a9', label:'비상 연락망 부착 여부', desc:'비상연락망·대피 안내문 눈에 잘 띄는 위치 부착 여부'},
+  {id:'a10',label:'관리 책임자 현장 확인', desc:'해당 건물 관리 책임자 현장 상주 또는 연락 가능 여부'},
+];
+
+const WATER_CHECKS = [
+  {id:'w1', label:'차수판 설치 위치 확인', desc:'출입구 지정 위치에 차수판 정위치 설치 여부'},
+  {id:'w2', label:'차수판 고정 상태', desc:'고정 브래킷·잠금장치 완전 체결 및 이탈 위험 여부'},
+  {id:'w3', label:'차수판 본체 변형·파손', desc:'차수판 판체 휨·균열·부식 등 손상 여부'},
+  {id:'w4', label:'차수판 하단 고무 실링 상태', desc:'하단 고무 패킹 밀착력 및 노화·손상 여부'},
+  {id:'w5', label:'차수판 보관 위치 적정성', desc:'비보관 시 지정 보관함에 보관 여부 및 보관 상태'},
+  {id:'w6', label:'차수판 설치·해체 용이성', desc:'긴급 상황 시 신속 설치 가능 여부 (매뉴얼 비치 확인)'},
+  {id:'w7', label:'차수판 규격 적정성', desc:'출입구 폭·높이 대비 차수판 규격 적합 여부'},
+  {id:'w8', label:'배수 구멍 막힘 여부', desc:'차수판 하단 배수 구멍(있는 경우) 막힘 여부'},
+];
+
+/* ══════════════════════════════════════════
+   4. 상태 관리 (localStorage)
+══════════════════════════════════════════ */
+const STORAGE_KEY = 'hwaseong_flood_v3';
+
+function getState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const s = JSON.parse(raw);
+    // 사이트 목록은 항상 최신 SITES 기준으로 머지
+    s.sites = SITES.map(site => {
+      const saved = s.sites.find(ss => ss.id === site.id);
+      return saved ? {...site, assignee:saved.assignee, org:saved.org, dept:saved.dept, team:saved.team} : site;
+    });
+    return s;
+  }
+  return { sites: JSON.parse(JSON.stringify(SITES)), inspections:{} };
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = getState();
+let currentUser = {name:'', org:'', dept:'', team:''};
+let currentSiteId = null;
+let uploadedPhotos = [];
+let editingSiteId = null;
+
+/* ══════════════════════════════════════════
+   5. 로그인
+══════════════════════════════════════════ */
+function doLogin() {
+  const org  = document.getElementById('loginOrg').value;
+  const dept = document.getElementById('loginDept')?.value || '';
+  const team = document.getElementById('loginTeam')?.value || '';
+  const name = document.getElementById('loginName').value.trim();
+  if (!org || !name) { showToast('소속 구분과 이름을 입력해주세요.'); return; }
+  currentUser = { name, org, dept, team };
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('currentUserDisplay').textContent =
+    `${org} ${dept} ${team} ${name}`.replace(/\s+/g,' ').trim();
+  renderAll();
+  startClock();
+}
+
+/* ══════════════════════════════════════════
+   6. 유틸
+══════════════════════════════════════════ */
+function startClock() {
+  const tick = () => {
+    const now = new Date();
+    document.getElementById('liveTime').textContent =
+      now.toLocaleDateString('ko-KR') + ' ' +
+      now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  };
+  tick(); setInterval(tick, 1000);
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'tab-report') renderReport();
+  if (id === 'tab-assign') renderAssignTable();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function getSiteStatus(site) {
+  const ins = state.inspections[site.id];
+  if (!ins || !ins.completed) {
+    if (ins && Object.keys(ins.checks||{}).length > 0) return 'progress';
+    return 'waiting';
+  }
+  const hasNG = Object.values(ins.checks||{}).some(v => v==='ng');
+  return hasNG ? 'issue' : 'done';
+}
+
+function getProgressPct(site) {
+  const ins = state.inspections[site.id];
+  if (!ins) return 0;
+  const total = (site.type==='alarm'?ALARM_CHECKS.length:0) +
+                (site.type==='water'?WATER_CHECKS.length:0) +
+                (site.type==='both'?(ALARM_CHECKS.length+WATER_CHECKS.length):0);
+  return total ? Math.round(Object.keys(ins.checks||{}).length / total * 100) : 0;
+}
+
+/* ══════════════════════════════════════════
+   7. 현장 목록 렌더링
+══════════════════════════════════════════ */
+function renderAll() { renderSiteGrid(); renderAssignTable(); }
+
+function renderSiteGrid() {
+  const grid = document.getElementById('siteGrid');
+  const fDong   = document.getElementById('filterDong')?.value   || '';
+  const fStatus = document.getElementById('filterStatus')?.value || '';
+  const fType   = document.getElementById('filterType')?.value   || '';
+  const fSearch = (document.getElementById('filterSearch')?.value || '').toLowerCase();
+
+  const stMap = {
+    waiting:{ label:'⏳ 점검 대기', cls:'s-wait' },
+    progress:{ label:'🔄 점검 중',  cls:'s-prog' },
+    done:   { label:'✅ 점검 완료', cls:'s-done' },
+    issue:  { label:'⚠️ 부적합',    cls:'s-issue'},
+  };
+  const typeTag = {
+    alarm: '<span class="tag tag-alarm">🔔 침수방지시설</span>',
+    water: '<span class="tag tag-water">🛡️ 차수판</span>',
+    both:  '<span class="tag tag-alarm">🔔 침수방지시설</span><span class="tag tag-both">🔄 중복설치</span><span class="tag tag-water">🛡️ 차수판</span>',
+  };
+
+  let filtered = state.sites.filter(s => {
+    if (fDong   && s.dong !== fDong) return false;
+    if (fStatus && getSiteStatus(s) !== fStatus) return false;
+    if (fType   && s.type !== fType) return false;
+    if (fSearch && !s.addr.toLowerCase().includes(fSearch) && !s.dong.toLowerCase().includes(fSearch)) return false;
+    return true;
+  });
+
+  let myCount = 0;
+  let html = '';
+  filtered.forEach(site => {
+    const st = getSiteStatus(site);
+    const pct = getProgressPct(site);
+    const isMe = site.assignee === currentUser.name;
+    if (isMe) myCount++;
+    const cardCls = st==='done'?'completed': st==='progress'?'in-progress': st==='issue'?'has-issue':'';
+    const stInfo = stMap[st];
+    html += `
+    <div class="site-card ${cardCls}" onclick="openCheckModal(${site.id})">
+      <div class="site-name">📍 ${site.dong} · ${site.addr.replace('화성시 ','')}</div>
+      <div class="dual-badge">${typeTag[site.type]}</div>
+      <div class="site-meta">
+        👤 담당: <strong>${site.assignee||'미배정'}</strong>
+        ${site.org ? `<span style="color:#718096">(${site.org} ${site.team})</span>` : ''}
+        ${isMe ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.68rem;margin-left:4px;">내 담당</span>' : ''}
+      </div>
+      <div style="margin-top:6px;"><span class="site-status ${stInfo.cls}">${stInfo.label}</span></div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <div style="font-size:.72rem;color:#718096;margin-top:3px;">점검 진행률: ${pct}%</div>
+    </div>`;
+  });
+
+  grid.innerHTML = html || '<div style="padding:24px;text-align:center;color:#718096;">해당하는 현장이 없습니다.</div>';
+  document.getElementById('siteCountBadge').textContent =
+    `전체 ${state.sites.length}개소 | 필터 ${filtered.length}개소 | 내 담당 ${myCount}개소`;
+}
+
+/* ══════════════════════════════════════════
+   8. 점검표 모달
+══════════════════════════════════════════ */
+function openCheckModal(siteId) {
+  const site = state.sites.find(s => s.id === siteId);
+  if (!site) return;
+  currentSiteId = siteId;
+  uploadedPhotos = [];
+
+  const ins = state.inspections[siteId] || {};
+  const savedChecks = ins.checks || {};
+  const savedMemos  = ins.memos  || {};
+  const savedPhotos = ins.photos || [];
+  const prevPhotos  = ins.prevPhotos || [];
+
+  const typeLabel = {alarm:'침수방지시설', water:'차수판', both:'침수방지시설 + 차수판 (중복설치)'};
+  document.getElementById('modalTitle').textContent =
+    `📋 ${site.dong} 점검표 [${typeLabel[site.type]}]`;
+
+  let html = `
+  <div class="info-box">
+    📍 <strong>${site.addr}</strong><br>
+    👤 담당: <strong>${site.assignee||'미배정'}</strong> ${site.org?`(${site.org} ${site.dept} ${site.team})`:''}
+    ${ins.time ? `&nbsp;|&nbsp; 🕐 최종저장: ${ins.time}` : ''}
+  </div>`;
+
+  // ── 침수방지시설 항목 ──
+  if (site.type === 'alarm' || site.type === 'both') {
+    html += `<div class="section-divider">🔔 침수방지시설 점검 항목 (${ALARM_CHECKS.length}개)</div>`;
+    html += renderCheckItems(ALARM_CHECKS, savedChecks, savedMemos);
+  }
+
+  // ── 차수판 항목 ──
+  if (site.type === 'water' || site.type === 'both') {
+    html += `<div class="section-divider">🛡️ 차수판 점검 항목 (${WATER_CHECKS.length}개)</div>`;
+    html += renderCheckItems(WATER_CHECKS, savedChecks, savedMemos);
+  }
+
+  // ── 사진 업로드 ──
+  html += `
+  <div class="section-divider">📸 현장 사진 업로드</div>
+  <label class="photo-upload-area" for="photoInput">
+    <div style="font-size:1.8rem;">📷</div>
+    <div style="margin-top:6px;font-size:.84rem;color:#718096;">
+      클릭 또는 드래그&드롭으로 사진 추가<br><small>JPG·PNG | 여러 장 동시 가능</small>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotoUpload(event)">
+  </label>
+  <div class="photo-grid" id="photoGrid">`;
+
+  savedPhotos.forEach(p => {
+    html += `<div class="photo-item">
+      <img src="${p.src}" onclick="viewPhoto('${p.src}')">
+      <div class="photo-caption">${p.caption||'현장사진'}</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // ── 이전 점검 사진 ──
+  if (prevPhotos.length > 0) {
+    html += `<div class="section-divider">🕐 이전 점검 사진 (비교용)</div>
+    <div class="photo-grid">`;
+    prevPhotos.forEach(p => {
+      html += `<div class="photo-item">
+        <img src="${p.src}" onclick="viewPhoto('${p.src}')">
+        <div class="photo-caption">${p.caption||'이전 점검'}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── 종합 의견 ──
+  html += `
+  <div class="section-divider">📝 종합 의견</div>
+  <textarea id="overallNote" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:72px;font-size:.84rem;"
+    placeholder="전체 점검 후 종합 의견을 입력하세요.">${ins.note||''}</textarea>`;
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('checkModal').classList.add('open');
+
+  // 드래그&드롭
+  const ua = document.querySelector('.photo-upload-area');
+  ua.addEventListener('dragover', e => { e.preventDefault(); ua.style.borderColor='#1a56db'; });
+  ua.addEventListener('dragleave', () => { ua.style.borderColor='#a0aec0'; });
+  ua.addEventListener('drop', e => { e.preventDefault(); ua.style.borderColor='#a0aec0'; handlePhotoFiles(e.dataTransfer.files); });
+}
+
+function renderCheckItems(items, savedChecks, savedMemos) {
+  let html = '';
+  items.forEach((item, idx) => {
+    const val = savedChecks[item.id] || '';
+    html += `
+    <div class="checklist-item">
+      <div class="check-num">${idx+1}</div>
+      <div class="check-content">
+        <div class="check-label">${item.label}</div>
+        <div class="check-desc">${item.desc}</div>
+        <div class="check-buttons">
+          <button class="btn-check ok ${val==='ok'?'selected':''}" onclick="selectCheck('${item.id}','ok',this)">✅ 적합</button>
+          <button class="btn-check ng ${val==='ng'?'selected':''}" onclick="selectCheck('${item.id}','ng',this)">❌ 부적합</button>
+          <button class="btn-check na ${val==='na'?'selected':''}" onclick="selectCheck('${item.id}','na',this)">➖ 해당없음</button>
+        </div>
+        <textarea class="check-memo" id="memo_${item.id}"
+          placeholder="특이사항 메모 (부적합 시 사유 필수)">${savedMemos[item.id]||''}</textarea>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+function closeModal() {
+  document.getElementById('checkModal').classList.remove('open');
+  currentSiteId = null; uploadedPhotos = [];
+}
+
+/* ══════════════════════════════════════════
+   9. 체크 선택 & 사진
+══════════════════════════════════════════ */
+function selectCheck(itemId, val, btn) {
+  btn.closest('.check-buttons').querySelectorAll('.btn-check').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  if (!state.inspections[currentSiteId]) state.inspections[currentSiteId] = {checks:{}, memos:{}};
+  state.inspections[currentSiteId].checks[itemId] = val;
+}
+
+function handlePhotoUpload(e) { handlePhotoFiles(e.target.files); }
+function handlePhotoFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const src = e.target.result;
+      const caption = `${currentUser.name} | ${new Date().toLocaleTimeString('ko-KR')}`;
+      uploadedPhotos.push({src, caption});
+      const grid = document.getElementById('photoGrid');
+      const div = document.createElement('div');
+      div.className = 'photo-item';
+      div.innerHTML = `<img src="${src}" onclick="viewPhoto('${src}')"><div class="photo-caption">${caption}</div>`;
+      grid.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function viewPhoto(src) { window.open(src,'_blank'); }
+
+/* ══════════════════════════════════════════
+   10. 점검 저장
+══════════════════════════════════════════ */
+function saveInspection() {
+  if (!currentSiteId) return;
+  const site = state.sites.find(s => s.id === currentSiteId);
+  if (!state.inspections[currentSiteId]) state.inspections[currentSiteId] = {checks:{}, memos:{}};
+  const ins = state.inspections[currentSiteId];
+
+  // 메모 수집
+  ins.memos = {};
+  [...ALARM_CHECKS, ...WATER_CHECKS].forEach(item => {
+    const el = document.getElementById(`memo_${item.id}`);
+    if (el) ins.memos[item.id] = el.value;
+  });
+
+  // 종합 의견
+  const noteEl = document.getElementById('overallNote');
+  if (noteEl) ins.note = noteEl.value;
+
+  // 사진 (이전 보존)
+  if (!ins.prevPhotos) ins.prevPhotos = [];
+  if (ins.photos?.length) ins.prevPhotos = [...ins.prevPhotos, ...ins.photos].slice(-8);
+  ins.photos = uploadedPhotos.length > 0 ? uploadedPhotos : (ins.photos || []);
+
+  ins.inspector = currentUser.name;
+  ins.org = currentUser.org; ins.dept = currentUser.dept; ins.team = currentUser.team;
+  ins.time = new Date().toLocaleString('ko-KR');
+  ins.completed = true;
+
+  // 담당자 자동 등록
+  if (!site.assignee && currentUser.name) {
+    site.assignee = currentUser.name;
+    site.org = currentUser.org; site.dept = currentUser.dept; site.team = currentUser.team;
+  }
+
+  saveState(); renderAll(); closeModal();
+  showToast(`✅ "${site.dong}" 현장 점검 결과가 저장되었습니다!`);
+}
+
+/* ══════════════════════════════════════════
+   11. 담당자 배정 테이블
+══════════════════════════════════════════ */
+function renderAssignTable() {
+  const stMap = {
+    waiting: '<span class="site-status s-wait">⏳ 대기</span>',
+    progress:'<span class="site-status s-prog">🔄 진행중</span>',
+    done:    '<span class="site-status s-done">✅ 완료</span>',
+    issue:   '<span class="site-status s-issue">⚠️ 부적합</span>',
+  };
+  const typeLabel = {alarm:'🔔 침수방지시설', water:'🛡️ 차수판', both:'🔔+🛡️ 중복'};
+  const isAdmin = currentUser.org === '본청';
+  let html = '';
+  state.sites.forEach((site, idx) => {
+    const st = getSiteStatus(site);
+    html += `<tr>
+      <td>${idx+1}</td>
+      <td>${site.dong}</td>
+      <td style="font-size:.78rem;">${site.addr}</td>
+      <td>${typeLabel[site.type]}</td>
+      <td><strong>${site.assignee||'<span style="color:#a0aec0">미배정</span>'}</strong></td>
+      <td style="font-size:.78rem;">${site.org||'-'} ${site.team||''}</td>
+      <td>${stMap[st]}</td>
+      <td>
+        ${isAdmin
+          ? `<button class="btn btn-sm btn-secondary" onclick="openAssignModal(${site.id})">✏️ 변경</button>`
+          : `<button class="btn btn-sm btn-primary" onclick="selfAssign(${site.id})">🙋 내가 맡기</button>`
+        }
+      </td>
+    </tr>`;
+  });
+  document.getElementById('assignTableBody').innerHTML = html;
+}
+
+function openAssignModal(siteId) {
+  editingSiteId = siteId;
+  const site = state.sites.find(s => s.id === siteId);
+  let orgOpts = Object.keys(ORG).map(o => `<option value="${o}" ${site.org===o?'selected':''}>${o}</option>`).join('');
+  document.getElementById('assignModalContent').innerHTML = `
+    <p style="margin-bottom:12px;">현장: <strong>${site.addr}</strong></p>
+    <select id="asgOrg" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;" onchange="updateAsgFields()">
+      <option value="">소속 선택</option>${orgOpts}
+    </select>
+    <select id="asgDept" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"></select>
+    <select id="asgTeam" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"></select>
+    <input type="text" id="asgName" value="${site.assignee||''}" placeholder="담당자 이름"
+      style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;">`;
+  document.getElementById('assignModal').classList.add('open');
+  if (site.org) updateAsgFields(site.org, site.dept, site.team);
+}
+
+function updateAsgFields(preOrg, preDept, preTeam) {
+  const org = preOrg || document.getElementById('asgOrg')?.value;
+  if (!org || !ORG[org]) return;
+  const deptSel = document.getElementById('asgDept');
+  const teamSel = document.getElementById('asgTeam');
+  deptSel.innerHTML = '<option value="">과 선택</option>' +
+    ORG[org].depts.map(d=>`<option ${d===preDept?'selected':''}>${d}</option>`).join('');
+  const dept = preDept || deptSel.value;
+  teamSel.innerHTML = '<option value="">팀 선택</option>' +
+    (ORG[org].teams[dept]||[]).map(t=>`<option ${t===preTeam?'selected':''}>${t}</option>`).join('');
+  deptSel.onchange = () => {
+    const d = deptSel.value;
+    teamSel.innerHTML = '<option value="">팀 선택</option>' +
+      (ORG[org].teams[d]||[]).map(t=>`<option>${t}</option>`).join('');
+  };
+}
+
+function saveAssign() {
+  const name = document.getElementById('asgName').value.trim();
+  const org  = document.getElementById('asgOrg').value;
+  const dept = document.getElementById('asgDept').value;
+  const team = document.getElementById('asgTeam').value;
+  if (!name) { showToast('담당자 이름을 입력해주세요.'); return; }
+  const site = state.sites.find(s => s.id === editingSiteId);
+  site.assignee = name; site.org = org; site.dept = dept; site.team = team;
+  saveState(); renderAll(); closeAssignModal();
+  showToast(`✅ 담당자가 "${name}"으로 변경되었습니다.`);
+}
+
+function selfAssign(siteId) {
+  const site = state.sites.find(s => s.id === siteId);
+  if (site.assignee && site.assignee !== currentUser.name) {
+    if (!confirm(`이미 "${site.assignee}"님이 담당 중입니다. 변경하시겠습니까?`)) return;
+  }
+  site.assignee = currentUser.name;
+  site.org = currentUser.org; site.dept = currentUser.dept; site.team = currentUser.team;
+  saveState(); renderAll();
+  showToast(`✅ "${site.addr}" 현장을 담당으로 등록했습니다.`);
+}
+
+function closeAssignModal() { document.getElementById('assignModal').classList.remove('open'); }
+
+/* ══════════════════════════════════════════
+   12. 결과 보고서
+══════════════════════════════════════════ */
+function renderReport() {
+  const sites = state.sites;
+  let total=sites.length, done=0, issue=0, waiting=0, progress=0, both=0;
+  sites.forEach(s => {
+    const st = getSiteStatus(s);
+    if (st==='done') done++;
+    else if (st==='issue') { done++; issue++; }
+    else if (st==='progress') progress++;
+    else waiting++;
+    if (s.type==='both') both++;
+  });
+
+  document.getElementById('reportSummary').innerHTML = `
+    <div class="summary-box sb-blue">  <div class="num">${total}</div>  <div class="lbl">전체 현장</div></div>
+    <div class="summary-box sb-green"> <div class="num">${done}</div>   <div class="lbl">점검 완료</div></div>
+    <div class="summary-box sb-red">   <div class="num">${issue}</div>  <div class="lbl">부적합 발견</div></div>
+    <div class="summary-box sb-yellow"><div class="num">${waiting+progress}</div><div class="lbl">미완료</div></div>
+    <div class="summary-box sb-purple"><div class="num">${both}</div>   <div class="lbl">중복설치</div></div>`;
+
+  const typeLabel = {alarm:'🔔 침수방지시설', water:'🛡️ 차수판', both:'🔔+🛡️ 중복'};
+  let rows = '';
+  sites.forEach((site, idx) => {
+    const ins = state.inspections[site.id] || {};
+    const checks = ins.checks || {};
+    const okCnt  = Object.values(checks).filter(v=>v==='ok').length;
+    const ngCnt  = Object.values(checks).filter(v=>v==='ng').length;
+    const naCnt  = Object.values(checks).filter(v=>v==='na').length;
+    const st = getSiteStatus(site);
+    const stBadge = {
+      waiting: '<span style="color:#718096">⏳ 대기</span>',
+      progress:'<span style="color:#d97706">🔄 진행중</span>',
+      done:    '<span style="color:#059669">✅ 완료</span>',
+      issue:   '<span style="color:#dc2626">⚠️ 부적합</span>',
+    }[st]||'';
+
+    rows += `<tr class="clickable" onclick="openDetailModal(${site.id})">
+      <td>${idx+1}</td>
+      <td><strong>${site.dong}</strong></td>
+      <td style="font-size:.78rem;">${site.addr}</td>
+      <td>${typeLabel[site.type]}</td>
+      <td>${ins.inspector||site.assignee||'-'}</td>
+      <td style="font-size:.76rem;">${ins.org||site.org||'-'} ${ins.team||site.team||''}</td>
+      <td style="color:#059669;font-weight:bold;">${okCnt}</td>
+      <td style="color:#dc2626;font-weight:bold;">${ngCnt}</td>
+      <td style="color:#718096;">${Object.keys(checks).length===0?'미점검':naCnt}</td>
+      <td>${stBadge}</td>
+      <td style="font-size:.74rem;color:#718096;">${ins.time||'-'}</td>
+    </tr>`;
+  });
+
+  document.getElementById('reportDetail').innerHTML = `
+    <table class="data-table">
+      <thead><tr>
+        <th>#</th><th>지역</th><th>주소</th><th>시설유형</th>
+        <th>점검자</th><th>소속/팀</th>
+        <th>✅적합</th><th>❌부적합</th><th>➖해당없음</th>
+        <th>상태</th><th>저장시각</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ══════════════════════════════════════════
+   13. 세부 결과 팝업 (사진 다운로드 포함)
+══════════════════════════════════════════ */
+function openDetailModal(siteId) {
+  const site = state.sites.find(s => s.id === siteId);
+  const ins  = state.inspections[siteId];
+  if (!ins || !ins.completed) {
+    showToast('아직 점검이 완료되지 않은 현장입니다.'); return;
+  }
+  const checks = ins.checks || {};
+  const memos  = ins.memos  || {};
+  const typeLabel = {alarm:'침수방지시설', water:'차수판', both:'침수방지시설 + 차수판'};
+
+  document.getElementById('detailModalTitle').textContent =
+    `📋 ${site.dong} · ${typeLabel[site.type]} 점검 세부 결과`;
+
+  const valLabel = { ok:'✅ 적합', ng:'❌ 부적합', na:'➖ 해당없음', '':'⬜ 미점검' };
+
+  let html = `
+  <div class="info-box">
+    📍 ${site.addr}<br>
+    👤 점검자: <strong>${ins.inspector||'-'}</strong>
+    (${ins.org||''} ${ins.dept||''} ${ins.team||''})
+    &nbsp;|&nbsp; 🕐 ${ins.time||'-'}
+  </div>`;
+
+  // ── 침수방지시설 항목 ──
+  if (site.type==='alarm'||site.type==='both') {
+    html += `<div class="section-divider">🔔 침수방지시설 점검 결과</div>
+    <div class="detail-check-grid">`;
+    ALARM_CHECKS.forEach(item => {
+      const v = checks[item.id]||'';
+      const memo = memos[item.id]||'';
+      html += `<div class="detail-check-item ${v}">
+        <div class="ci-label">${item.label}</div>
+        <div>${valLabel[v]||'⬜ 미점검'}</div>
+        ${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── 차수판 항목 ──
+  if (site.type==='water'||site.type==='both') {
+    html += `<div class="section-divider">🛡️ 차수판 점검 결과</div>
+    <div class="detail-check-grid">`;
+    WATER_CHECKS.forEach(item => {
+      const v = checks[item.id]||'';
+      const memo = memos[item.id]||'';
+      html += `<div class="detail-check-item ${v}">
+        <div class="ci-label">${item.label}</div>
+        <div>${valLabel[v]||'⬜ 미점검'}</div>
+        ${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── 종합 의견 ──
+  if (ins.note) {
+    html += `<div class="section-divider">📝 종합 의견</div>
+    <div style="background:#f7fafc;padding:12px;border-radius:8px;font-size:.84rem;line-height:1.7;">${ins.note}</div>`;
+  }
+
+  // ── 현장 사진 (다운로드 버튼 포함) ──
+  const allPhotos = [...(ins.photos||[]), ...(ins.prevPhotos||[])];
+  if (allPhotos.length > 0) {
+    html += `<div class="section-divider">📸 현장 사진 (클릭: 확대 | 다운로드 버튼 제공)</div>
+    <div class="photo-dl-grid">`;
+    allPhotos.forEach((p, i) => {
+      html += `<div class="photo-dl-item">
+        <img src="${p.src}" onclick="viewPhoto('${p.src}')">
+        <div class="photo-dl-caption">${p.caption||'현장사진'}</div>
+        <button class="photo-dl-btn" onclick="downloadPhoto('${p.src}','점검사진_${site.dong}_${i+1}.jpg')">
+          ⬇️ 다운로드
+        </button>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div class="warn-box">📸 등록된 사진이 없습니다.</div>`;
+  }
+
+  document.getElementById('detailModalBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+/* ── 사진 다운로드 ── */
+function downloadPhoto(src, filename) {
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast(`📥 "${filename}" 다운로드 시작`);
+}
+
+/* ══════════════════════════════════════════
+   14. 모달 외부 클릭 닫기
+══════════════════════════════════════════ */
+['checkModal','assignModal','detailModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.remove('open');
+      if (id==='checkModal') { currentSiteId=null; uploadedPhotos=[]; }
+    }
+  });
+});
+</script>
+</body>
+</html>
