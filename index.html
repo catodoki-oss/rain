@@ -10,10 +10,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <!-- Cloudinary 위젯 -->
 <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+<!-- JSZip + FileSaver (전체 사진 다운로드) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Apple SD Gothic Neo',sans-serif;background:#f0f4f8;min-height:100vh;}
+body{font-family:'Apple SD Gothic Neo',sans-serif;background:#f0f4f8;}
 
 /* ── 헤더 ── */
 header{
@@ -27,17 +30,9 @@ header h1{font-size:.95rem;font-weight:bold;}
 .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:.78rem;}
 
 /* ── 탭 ── */
-.tab-nav{
-  display:flex;background:#fff;border-bottom:2px solid #e2e8f0;
-  position:sticky;top:52px;z-index:99;overflow-x:auto;
-}
-.tab-btn{
-  flex:1;min-width:80px;padding:11px 8px;border:none;background:none;
-  font-size:.82rem;font-weight:bold;color:#718096;cursor:pointer;
-  border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;
-}
+.tab-nav{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;position:sticky;top:52px;z-index:99;overflow-x:auto;}
+.tab-btn{flex:1;min-width:80px;padding:11px 8px;border:none;background:none;font-size:.82rem;font-weight:bold;color:#718096;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
 .tab-btn.active{color:#1a56db;border-bottom-color:#1a56db;background:#f0f7ff;}
-.tab-btn:hover{background:#f7fafc;}
 
 /* ── 컨테이너 ── */
 .container{max-width:960px;margin:0 auto;padding:16px;}
@@ -46,28 +41,17 @@ header h1{font-size:.95rem;font-weight:bold;}
 
 /* ── 카드 ── */
 .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
-.card-title{font-size:1rem;font-weight:bold;color:#1a56db;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0;}
+.card-title{font-size:1rem;font-weight:bold;color:#1a56db;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
 
 /* ── 동 검색 ── */
 .dong-search-wrap{display:flex;gap:8px;margin-bottom:14px;}
-.dong-search-wrap input{
-  flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;
-  font-size:.88rem;font-family:inherit;
-}
+.dong-search-wrap input{flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:.88rem;font-family:inherit;}
 .dong-search-wrap input:focus{outline:none;border-color:#1a56db;}
-.dong-search-wrap button{
-  padding:10px 16px;background:#1a56db;color:#fff;border:none;
-  border-radius:8px;cursor:pointer;font-size:.84rem;font-weight:bold;
-}
+.dong-search-wrap button{padding:10px 16px;background:#1a56db;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.84rem;font-weight:bold;}
 
 /* ── 동 그리드 ── */
-.dong-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;
-}
-.dong-card{
-  background:#f7fafc;border:2px solid #e2e8f0;border-radius:12px;
-  padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;
-}
+.dong-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.dong-card{background:#f7fafc;border:2px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
 .dong-card:hover{border-color:#1a56db;background:#ebf4ff;transform:translateY(-2px);}
 .dong-card.has-issue{border-color:#feb2b2;background:#fff5f5;}
 .dong-card.all-done{border-color:#9ae6b4;background:#f0fff4;}
@@ -80,35 +64,20 @@ header h1{font-size:.95rem;font-weight:bold;}
 .dmb-issue{background:#fee2e2;color:#991b1b;}
 .dmb-prog{background:#fef3c7;color:#92400e;}
 .dmb-wait{background:#e2e8f0;color:#4a5568;}
-.my-badge{
-  position:absolute;top:6px;right:6px;
-  background:#1a56db;color:#fff;font-size:.6rem;
-  padding:1px 5px;border-radius:6px;
-}
+.my-badge{position:absolute;top:6px;right:6px;background:#1a56db;color:#fff;font-size:.6rem;padding:1px 5px;border-radius:6px;}
 
 /* ── 현장 목록 ── */
-.back-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 14px;background:#fff;border:2px solid #e2e8f0;
-  border-radius:8px;cursor:pointer;font-size:.82rem;color:#4a5568;
-  margin-bottom:12px;transition:all .2s;
-}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fff;border:2px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:.82rem;color:#4a5568;margin-bottom:12px;transition:all .2s;}
 .back-btn:hover{border-color:#1a56db;color:#1a56db;}
 .site-list-header{display:flex;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
 .site-list-header h2{font-size:1rem;font-weight:bold;color:#2d3748;}
 .site-type-filter{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
-.type-filter-btn{
-  padding:6px 12px;border:2px solid #e2e8f0;border-radius:20px;
-  background:#fff;font-size:.76rem;cursor:pointer;transition:all .2s;font-weight:bold;
-}
+.type-filter-btn{padding:6px 12px;border:2px solid #e2e8f0;border-radius:20px;background:#fff;font-size:.76rem;cursor:pointer;transition:all .2s;font-weight:bold;}
 .type-filter-btn.active{background:#1a56db;color:#fff;border-color:#1a56db;}
 
-/* ── 현장 카드 그리드 ── */
+/* ── 현장 카드 ── */
 .site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
-.site-card{
-  background:#f7fafc;border:2px solid #e2e8f0;border-radius:10px;
-  padding:13px;cursor:pointer;transition:all .2s;
-}
+.site-card{background:#f7fafc;border:2px solid #e2e8f0;border-radius:10px;padding:13px;cursor:pointer;transition:all .2s;}
 .site-card:hover{border-color:#1a56db;background:#ebf4ff;}
 .site-card.completed{border-color:#9ae6b4;background:#f0fff4;}
 .site-card.in-progress{border-color:#fbd38d;background:#fffff0;}
@@ -120,10 +89,7 @@ header h1{font-size:.95rem;font-weight:bold;}
 .tag-alarm{background:#ebf8ff;color:#2b6cb0;}
 .tag-water{background:#f0fff4;color:#276749;}
 .tag-both{background:#faf5ff;color:#553c9a;}
-.site-status{
-  display:inline-block;font-size:.72rem;padding:2px 8px;
-  border-radius:10px;font-weight:bold;
-}
+.site-status{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:10px;font-weight:bold;}
 .s-wait{background:#e2e8f0;color:#4a5568;}
 .s-prog{background:#fef3c7;color:#92400e;}
 .s-done{background:#d1fae5;color:#065f46;}
@@ -132,23 +98,10 @@ header h1{font-size:.95rem;font-weight:bold;}
 .progress-bar{height:100%;background:#1a56db;border-radius:4px;transition:width .3s;}
 
 /* ── 사진 ── */
-.photo-upload-area{
-  border:2px dashed #a0aec0;border-radius:10px;padding:20px;
-  text-align:center;cursor:pointer;transition:all .2s;background:#f7fafc;
-  display:block;
-}
-.photo-upload-area:hover{border-color:#1a56db;background:#ebf4ff;}
-.photo-upload-area input{display:none;}
-.photo-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:8px;margin-top:12px;
-}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px;}
 .photo-item{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;border:2px solid #e2e8f0;}
 .photo-item img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;}
-.photo-caption{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(0,0,0,.55);color:#fff;font-size:.64rem;padding:2px 5px;text-align:center;
-}
+.photo-caption{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.64rem;padding:2px 5px;text-align:center;}
 
 /* ── 버튼 ── */
 .btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:bold;transition:all .2s;}
@@ -156,9 +109,14 @@ header h1{font-size:.95rem;font-weight:bold;}
 .btn-primary:hover{background:#1e40af;}
 .btn-success{background:#48bb78;color:#fff;}
 .btn-success:hover{background:#38a169;}
+.btn-warning{background:#f6ad55;color:#fff;}
+.btn-warning:hover{background:#ed8936;}
 .btn-secondary{background:#e2e8f0;color:#4a5568;}
 .btn-secondary:hover{background:#cbd5e0;}
 .btn-sm{padding:5px 11px;font-size:.76rem;}
+.btn-cloud-photo{width:100%;padding:14px;margin-top:4px;background:#f3f4f6;border:2px dashed #9ca3af;border-radius:8px;font-size:15px;cursor:pointer;color:#374151;transition:all .2s;font-family:inherit;}
+.btn-cloud-photo:hover{background:#e5e7eb;border-color:#6b7280;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
 
 /* ── 테이블 ── */
 .data-table{width:100%;border-collapse:collapse;font-size:.84rem;}
@@ -181,10 +139,7 @@ header h1{font-size:.95rem;font-weight:bold;}
 
 /* ── 세부 팝업 ── */
 .detail-check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-.detail-check-item{
-  padding:8px 12px;border-radius:8px;font-size:.8rem;
-  border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:3px;
-}
+.detail-check-item{padding:8px 12px;border-radius:8px;font-size:.8rem;border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:3px;}
 .detail-check-item.ok{background:#f0fff4;border-color:#9ae6b4;}
 .detail-check-item.ng{background:#fff5f5;border-color:#feb2b2;}
 .detail-check-item.na{background:#f7fafc;border-color:#e2e8f0;}
@@ -193,127 +148,105 @@ header h1{font-size:.95rem;font-weight:bold;}
 .photo-dl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px;}
 .photo-dl-item{position:relative;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;}
 .photo-dl-item img{width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in;}
-.photo-dl-btn{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(26,86,219,.85);color:#fff;border:none;
-  padding:5px;font-size:.68rem;cursor:pointer;text-align:center;
-}
+.photo-dl-btn{position:absolute;bottom:0;left:0;right:0;background:rgba(26,86,219,.85);color:#fff;border:none;padding:5px;font-size:.68rem;cursor:pointer;text-align:center;}
 .photo-dl-caption{background:#f7fafc;font-size:.66rem;padding:3px 6px;color:#718096;text-align:center;}
 
 /* ── 정보 박스 ── */
 .info-box{background:#ebf8ff;border-left:4px solid #1a56db;padding:9px 13px;border-radius:0 8px 8px 0;font-size:.8rem;color:#2b6cb0;margin-bottom:12px;}
 .warn-box{background:#fffbeb;border-left:4px solid #f6ad55;padding:9px 13px;border-radius:0 8px 8px 0;font-size:.8rem;color:#92400e;margin-bottom:12px;}
 
+/* ── 실시간 뱃지 ── */
+.live-badge{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:bold;}
+.live-dot{width:7px;height:7px;background:#10b981;border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── 다운로드 진행 바 ── */
+.dl-progress-wrap{display:none;margin-top:12px;padding:12px;background:#f0f7ff;border-radius:8px;border:1px solid #bfdbfe;}
+.dl-progress-bar-bg{background:#e2e8f0;border-radius:4px;height:8px;margin:8px 0;}
+.dl-progress-bar-fill{height:100%;background:#1a56db;border-radius:4px;transition:width .2s;width:0%;}
+.dl-progress-text{font-size:.8rem;color:#2b6cb0;font-weight:bold;}
+
 /* ── 모달 ── */
-.modal-overlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.55);z-index:200;
-  align-items:center;justify-content:center;padding:16px;
-}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
-.modal{
-  background:#fff;border-radius:14px;width:100%;max-width:680px;
-  max-height:90vh;display:flex;flex-direction:column;
-  box-shadow:0 8px 32px rgba(0,0,0,.25);
-}
-.modal-header{
-  padding:16px 18px;border-bottom:2px solid #e2e8f0;
-  display:flex;align-items:center;justify-content:space-between;
-  background:#f7fafc;border-radius:14px 14px 0 0;
-}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.25);}
+.modal-header{padding:16px 18px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f7fafc;border-radius:14px 14px 0 0;}
 .modal-header h2{font-size:.95rem;font-weight:bold;color:#2d3748;}
-.modal-close{
-  background:none;border:none;font-size:1.3rem;cursor:pointer;
-  color:#718096;padding:2px 6px;border-radius:6px;
-}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#718096;padding:2px 6px;border-radius:6px;}
 .modal-close:hover{background:#e2e8f0;}
 .modal-body{padding:16px 18px;overflow-y:auto;flex:1;}
-.modal-footer{
-  padding:12px 18px;border-top:2px solid #e2e8f0;
-  display:flex;justify-content:flex-end;gap:8px;
-  background:#f7fafc;border-radius:0 0 14px 14px;
-}
+.modal-footer{padding:12px 18px;border-top:2px solid #e2e8f0;display:flex;justify-content:flex-end;gap:8px;background:#f7fafc;border-radius:0 0 14px 14px;}
 
-/* ── 점검표 내부 ── */
-.section-divider{
-  font-size:.82rem;font-weight:bold;color:#1a56db;
-  background:#ebf8ff;padding:6px 12px;border-radius:6px;
-  margin:14px 0 8px;
-}
-.checklist-item{
-  display:flex;gap:10px;padding:10px;border:1px solid #e2e8f0;
-  border-radius:8px;margin-bottom:7px;background:#f9fafb;
-}
-.check-num{
-  width:22px;height:22px;background:#1a56db;color:#fff;
-  border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:.72rem;font-weight:bold;flex-shrink:0;margin-top:2px;
-}
+/* ── 점검표 ── */
+.section-divider{font-size:.82rem;font-weight:bold;color:#1a56db;background:#ebf8ff;padding:6px 12px;border-radius:6px;margin:14px 0 8px;}
+.checklist-item{display:flex;gap:10px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:7px;background:#f9fafb;}
+.check-num{width:22px;height:22px;background:#1a56db;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:bold;flex-shrink:0;margin-top:2px;}
 .check-content{flex:1;}
 .check-label{font-weight:bold;font-size:.84rem;color:#2d3748;margin-bottom:2px;}
 .check-desc{font-size:.74rem;color:#718096;margin-bottom:7px;}
 .check-buttons{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
-.btn-check{
-  padding:5px 10px;border:2px solid #e2e8f0;border-radius:6px;
-  background:#fff;font-size:.74rem;cursor:pointer;transition:all .15s;font-weight:bold;
-}
+.btn-check{padding:5px 10px;border:2px solid #e2e8f0;border-radius:6px;background:#fff;font-size:.74rem;cursor:pointer;transition:all .15s;font-weight:bold;}
 .btn-check.ok.selected{background:#d1fae5;border-color:#48bb78;color:#065f46;}
 .btn-check.ng.selected{background:#fee2e2;border-color:#fc8181;color:#9b2c2c;}
 .btn-check.na.selected{background:#e2e8f0;border-color:#a0aec0;color:#4a5568;}
-.check-memo{
-  width:100%;padding:6px 9px;border:1px solid #e2e8f0;border-radius:6px;
-  font-size:.76rem;font-family:inherit;resize:none;min-height:44px;
-}
+.check-memo{width:100%;padding:6px 9px;border:1px solid #e2e8f0;border-radius:6px;font-size:.76rem;font-family:inherit;resize:none;min-height:44px;}
 
 /* ── 로그인 ── */
-#loginScreen{
-  position:fixed;inset:0;
-  background:linear-gradient(135deg,#1a56db,#0e3a8a);
-  display:flex;align-items:center;justify-content:center;z-index:500;
-}
-.login-box{
-  background:#fff;border-radius:16px;padding:32px 28px;
-  width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.25);
-}
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#1a56db,#0e3a8a);display:flex;align-items:center;justify-content:center;z-index:500;}
+.login-box{background:#fff;border-radius:16px;padding:32px 28px;width:360px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.25);}
 .login-box h2{color:#1a56db;margin-bottom:4px;font-size:1.2rem;}
 .login-box p{color:#718096;font-size:.82rem;margin-bottom:20px;}
-.login-box select,.login-box input{
-  width:100%;padding:9px 13px;border:2px solid #e2e8f0;
-  border-radius:8px;font-size:.88rem;margin-bottom:10px;font-family:inherit;
-}
+.login-box select,.login-box input{width:100%;padding:9px 13px;border:2px solid #e2e8f0;border-radius:8px;font-size:.88rem;margin-bottom:10px;font-family:inherit;}
 .login-box select:focus,.login-box input:focus{outline:none;border-color:#1a56db;}
 .login-section-label{font-size:.78rem;color:#718096;text-align:left;margin-bottom:4px;margin-top:6px;font-weight:bold;}
 
 /* ── 토스트 ── */
-#toast{
-  position:fixed;bottom:22px;left:50%;
-  transform:translateX(-50%) translateY(80px);
-  background:#2d3748;color:#fff;padding:10px 22px;
-  border-radius:30px;font-size:.84rem;z-index:999;
-  transition:transform .3s;white-space:nowrap;
-}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:#2d3748;color:#fff;padding:10px 22px;border-radius:30px;font-size:.84rem;z-index:999;transition:transform .3s;white-space:nowrap;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 
-/* ── 빈 상태 ── */
 .empty-state{text-align:center;padding:40px 20px;color:#a0aec0;}
 .empty-state .empty-icon{font-size:3rem;margin-bottom:12px;}
-.empty-state p{font-size:.9rem;}
 
-/* ── Cloudinary 사진 업로드 버튼 ── */
-.btn-cloud-photo{
-  width:100%;padding:14px;margin-top:4px;
-  background:#f3f4f6;border:2px dashed #9ca3af;
-  border-radius:8px;font-size:15px;cursor:pointer;
-  color:#374151;transition:all .2s;font-family:inherit;
-}
-.btn-cloud-photo:hover{background:#e5e7eb;border-color:#6b7280;}
-
+/* ── 모바일 반응형 ── */
 @media(max-width:600px){
-  header h1{font-size:.82rem;}
-  .tab-btn{padding:9px 8px;font-size:.74rem;}
-  .dong-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
-  .detail-check-grid{grid-template-columns:1fr;}
+  header h1{font-size:0;}
+  header h1::before{content:'🌧️ 침수방지 점검';font-size:.88rem;font-weight:bold;}
+  header .badge{display:none;}
+  #liveTime{display:none;}
+  .tab-btn{padding:10px 0;font-size:0;flex:1;text-align:center;}
+  .tab-btn[onclick*="tab-sites"]::before{content:'🏘️';font-size:1.3rem;}
+  .tab-btn[onclick*="tab-assign"]::before{content:'👤';font-size:1.3rem;}
+  .tab-btn[onclick*="tab-report"]::before{content:'📊';font-size:1.3rem;}
+  .tab-btn[onclick*="tab-guide"]::before{content:'📖';font-size:1.3rem;}
+  .container{padding:10px 8px;}
+  .card{padding:12px 10px;}
+  .dong-grid{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .dong-card{padding:10px 6px;}
+  .dong-card .dong-icon{font-size:1.5rem;}
+  .dong-card .dong-name{font-size:.78rem;}
   .site-grid{grid-template-columns:1fr;}
+  .detail-check-grid{grid-template-columns:1fr;}
+  .report-summary{grid-template-columns:repeat(3,1fr);gap:7px;}
+  .summary-box{padding:10px 4px;}
+  .summary-box .num{font-size:1.4rem;}
+  .summary-box .lbl{font-size:.64rem;}
+  .data-table thead{display:none;}
+  .data-table,.data-table tbody,.data-table tr,.data-table td{display:block;width:100%;}
+  .data-table tr{border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;padding:10px 12px;background:#fff;}
+  .data-table td{border:none;padding:3px 0;font-size:.8rem;display:flex;align-items:center;gap:6px;}
+  .data-table td::before{content:attr(data-label);font-weight:bold;color:#718096;font-size:.7rem;min-width:52px;flex-shrink:0;}
+  #reportDetail{overflow-x:hidden;}
+  #reportDetail table thead{display:none;}
+  #reportDetail table,#reportDetail tbody,#reportDetail tr,#reportDetail td{display:block;width:100%;}
+  #reportDetail tr{border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;padding:10px 12px;background:#fff;cursor:pointer;}
+  #reportDetail tr:hover{background:#ebf4ff;}
+  #reportDetail td{border:none;padding:3px 0;font-size:.8rem;display:flex;align-items:center;gap:6px;}
+  #reportDetail td::before{content:attr(data-label);font-weight:bold;color:#718096;font-size:.7rem;min-width:52px;flex-shrink:0;}
+  .modal-overlay{padding:6px;}
+  .modal-body{max-height:75vh;padding:12px 10px;}
+  .btn-check{padding:5px 8px;font-size:.7rem;}
+  .photo-dl-grid{grid-template-columns:repeat(2,1fr);}
+  .login-box{width:calc(100vw - 24px);padding:22px 16px;}
 }
 </style>
 </head>
@@ -325,7 +258,6 @@ header h1{font-size:.95rem;font-weight:bold;}
     <div style="font-size:2.2rem;margin-bottom:10px;">🌧️</div>
     <h2>침수방지 현장점검 시스템</h2>
     <p>화성시 건축과 · 구청 도시건축과</p>
-
     <div class="login-section-label">▸ 소속 구분</div>
     <select id="loginOrg" onchange="updateOrgFields()">
       <option value="">소속 구분 선택</option>
@@ -334,20 +266,15 @@ header h1{font-size:.95rem;font-weight:bold;}
       <option value="효행구청">효행구청</option>
       <option value="병점구청">병점구청</option>
     </select>
-
     <div id="deptField" style="display:none">
       <div class="login-section-label">▸ 과</div>
       <select id="loginDept" onchange="updateTeamField()"></select>
       <div class="login-section-label">▸ 팀</div>
       <select id="loginTeam"></select>
     </div>
-
     <div class="login-section-label">▸ 이름</div>
     <input type="text" id="loginName" placeholder="이름 입력 (예: 홍길동)" maxlength="10">
-
-    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="doLogin()">
-      🔐 점검 시스템 입장
-    </button>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="doLogin()">🔐 점검 시스템 입장</button>
   </div>
 </div>
 
@@ -368,16 +295,17 @@ header h1{font-size:.95rem;font-weight:bold;}
   <button class="tab-btn" onclick="showTab('tab-guide',this)">📖 사용 안내</button>
 </nav>
 
-<!-- ══════════════ 메인 ══════════════ -->
 <div class="container">
 
 <!-- ── TAB 1: 현장 목록 ── -->
 <div id="tab-sites" class="tab-content active">
-  <!-- STEP 1: 동 선택 -->
   <div id="dongSelectScreen">
     <div class="card">
-      <div class="card-title">📍 지역(동·읍·면) 선택</div>
-      <div class="info-box">점검할 지역을 선택하거나 검색하세요. 지역 카드를 클릭하면 해당 현장 목록으로 이동합니다.</div>
+      <div class="card-title">
+        📍 지역(동·읍·면) 선택
+        <span class="live-badge"><span class="live-dot"></span>실시간 연동</span>
+      </div>
+      <div class="info-box">점검할 지역을 선택하거나 검색하세요. 다른 사람이 점검하면 즉시 반영됩니다!</div>
       <div class="dong-search-wrap">
         <input type="text" id="dongSearchInput"
           placeholder="🔍 지역명 검색 (예: 병점동, 봉담읍...)"
@@ -389,7 +317,6 @@ header h1{font-size:.95rem;font-weight:bold;}
     </div>
   </div>
 
-  <!-- STEP 2: 현장 목록 -->
   <div id="siteListScreen" style="display:none;">
     <button class="back-btn" onclick="goBackToDong()">← 지역 목록으로 돌아가기</button>
     <div class="card">
@@ -416,7 +343,7 @@ header h1{font-size:.95rem;font-weight:bold;}
     <div style="overflow-x:auto;">
       <table class="data-table">
         <thead>
-          <tr><th>#</th><th>지역</th><th>주소</th><th>시설유형</th><th>담당자</th><th>소속/팀</th><th>상태</th><th>관리</th></tr>
+          <tr><th>#</th><th>지역</th><th>주소</th><th>시설</th><th>담당자</th><th>소속/팀</th><th>상태</th><th>관리</th></tr>
         </thead>
         <tbody id="assignTableBody"></tbody>
       </table>
@@ -427,17 +354,40 @@ header h1{font-size:.95rem;font-weight:bold;}
 <!-- ── TAB 3: 결과 보고서 ── -->
 <div id="tab-report" class="tab-content">
   <div class="card">
-    <div class="card-title">📊 전체 점검 결과 요약</div>
+    <div class="card-title">
+      📊 전체 점검 결과 요약
+      <span class="live-badge"><span class="live-dot"></span>실시간</span>
+    </div>
     <div class="report-summary" id="reportSummary"></div>
   </div>
   <div class="card">
-    <div class="card-title">
-      📋 현장별 점검 결과 상세
-      <span style="font-size:.74rem;color:#718096;margin-left:8px;">※ 행 클릭 시 세부 팝업</span>
+    <div class="card-title">📋 현장별 점검 결과 상세
+      <span style="font-size:.74rem;color:#718096;">※ 행 클릭 시 세부 팝업</span>
     </div>
     <div style="overflow-x:auto;" id="reportDetail"></div>
   </div>
-  <div style="text-align:right;margin-top:8px;">
+
+  <!-- 전체 사진 다운로드 섹션 -->
+  <div class="card" id="dlSection" style="display:none;">
+    <div class="card-title">📦 전체 현장 사진 일괄 다운로드
+      <span style="font-size:.74rem;color:#718096;font-weight:normal;">(본청 관리자 전용)</span>
+    </div>
+    <div class="info-box">
+      📁 모든 현장 사진을 <strong>주소명 폴더</strong>로 분류하여 ZIP 파일로 다운로드합니다.<br>
+      파일명 형식: <code>지역명_주소_번호.jpg</code>
+    </div>
+    <div class="dl-progress-wrap" id="dlProgressWrap">
+      <div class="dl-progress-text" id="dlProgressText">준비 중...</div>
+      <div class="dl-progress-bar-bg">
+        <div class="dl-progress-bar-fill" id="dlProgressFill"></div>
+      </div>
+    </div>
+    <button class="btn btn-warning" id="dlAllBtn" onclick="downloadAllPhotos()" style="width:100%;padding:14px;font-size:1rem;">
+      📦 전체 사진 ZIP 다운로드
+    </button>
+  </div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px;">
     <button class="btn btn-primary" onclick="window.print()">🖨️ 보고서 인쇄 / PDF</button>
   </div>
 </div>
@@ -450,16 +400,26 @@ header h1{font-size:.95rem;font-weight:bold;}
       <p><strong>🔵 점검 순서</strong></p>
       <ol style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
         <li>로그인 → 소속 구분·과·팀·이름 입력</li>
-        <li><strong>[현장 목록]</strong> 탭 → 지역(동·읍·면) 카드 선택</li>
-        <li>해당 지역의 현장 카드 클릭 → 점검표 팝업 오픈</li>
-        <li>침수방지시설 / 차수판 항목별 ✅ 적합 / ❌ 부적합 / ➖ 해당없음 선택</li>
-        <li>현장 사진 업로드 버튼 클릭 → 사진 촬영 또는 파일 선택</li>
-        <li>[점검 완료 저장] 클릭</li>
-        <li><strong>[결과 보고서]</strong> 탭 → 행 클릭 → 세부 팝업 확인 및 사진 다운로드</li>
+        <li>[현장 목록] 탭 → 지역(동·읍·면) 카드 선택</li>
+        <li>현장 카드 클릭 → 점검표 팝업 오픈</li>
+        <li>침수방지시설 / 차수판 항목별 ✅적합 / ❌부적합 / ➖해당없음 선택</li>
+        <li>📷 사진 업로드 버튼 클릭 → 사진 촬영 또는 파일 선택</li>
+        <li>[점검 완료 저장] 클릭 → 모든 사용자에게 즉시 공유!</li>
+        <li>[결과 보고서] 탭 → 행 클릭 → 세부 팝업 확인 및 사진 다운로드</li>
       </ol>
+      <p><strong>🟢 실시간 공유</strong></p>
+      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
+        <li>저장 즉시 모든 사용자 화면에 <strong>실시간 반영</strong> (새로고침 불필요)</li>
+        <li>사진 → Cloudinary 저장 / 데이터 → Firebase Firestore 저장</li>
+      </ul>
+      <p><strong>📦 전체 사진 일괄 다운로드 (본청 관리자)</strong></p>
+      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
+        <li>[결과 보고서] 탭 하단 → [전체 사진 ZIP 다운로드] 버튼</li>
+        <li>주소명 폴더로 자동 분류된 ZIP 파일로 다운로드</li>
+      </ul>
       <p><strong>🟣 중복설치 현장</strong></p>
       <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
-        <li>침수방지시설+차수판 모두 설치된 현장은 <span class="tag tag-both">중복설치</span> 태그 표시</li>
+        <li>침수방지시설+차수판 모두 설치된 현장은 🔄 중복 태그 표시</li>
         <li>점검표에 두 시설 항목이 통합되어 한 번에 점검 가능</li>
       </ul>
       <p><strong>🔴 주의사항</strong></p>
@@ -484,7 +444,7 @@ header h1{font-size:.95rem;font-weight:bold;}
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
-      <button class="btn btn-success" onclick="saveInspection()">💾 점검 완료 저장</button>
+      <button class="btn btn-success" id="saveBtn" onclick="saveInspection()">💾 점검 완료 저장</button>
     </div>
   </div>
 </div>
@@ -518,7 +478,6 @@ header h1{font-size:.95rem;font-weight:bold;}
   </div>
 </div>
 
-<!-- 토스트 -->
 <div id="toast"></div>
 
 <script>
@@ -540,67 +499,43 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 /* ════════════════════════════════════════
-   1. 조직 구조
+   조직 구조
 ════════════════════════════════════════ */
 const ORG = {
-  "본청":{
-    depts:["건축과"],
-    teams:{"건축과":["건축정책팀","건축허가팀","건축지원팀","건축안전팀","광고물관리팀"]}
-  },
-  "만세구청":{
-    depts:["도시건축과","현장민원실"],
-    teams:{
-      "도시건축과":["건축행정팀","건축민원팀","건축관리팀"],
-      "현장민원실":["건축행정팀","건축민원팀","건축관리팀"]
-    }
-  },
-  "효행구청":{
-    depts:["도시건축과","현장민원실"],
-    teams:{
-      "도시건축과":["건축행정팀","건축민원팀","건축관리팀"],
-      "현장민원실":["건축행정팀","건축민원팀","건축관리팀"]
-    }
-  },
-  "병점구청":{
-    depts:["도시건축과","현장민원실"],
-    teams:{
-      "도시건축과":["건축행정팀","건축민원팀","건축관리팀"],
-      "현장민원실":["건축행정팀","건축민원팀","건축관리팀"]
-    }
-  }
+  "본청":{depts:["건축과"],teams:{"건축과":["건축정책팀","건축허가팀","건축지원팀","건축안전팀","광고물관리팀"]}},
+  "만세구청":{depts:["도시건축과","현장민원실"],teams:{"도시건축과":["건축행정팀","건축민원팀","건축관리팀"],"현장민원실":["건축행정팀","건축민원팀","건축관리팀"]}},
+  "효행구청":{depts:["도시건축과","현장민원실"],teams:{"도시건축과":["건축행정팀","건축민원팀","건축관리팀"],"현장민원실":["건축행정팀","건축민원팀","건축관리팀"]}},
+  "병점구청":{depts:["도시건축과","현장민원실"],teams:{"도시건축과":["건축행정팀","건축민원팀","건축관리팀"],"현장민원실":["건축행정팀","건축민원팀","건축관리팀"]}}
 };
-
 function updateOrgFields(){
   const org=document.getElementById('loginOrg').value;
   const df=document.getElementById('deptField');
   if(!org){df.style.display='none';return;}
   df.style.display='block';
   const ds=document.getElementById('loginDept');
-  ds.innerHTML='<option value="">과 선택</option>'+
-    ORG[org].depts.map(d=>`<option>${d}</option>`).join('');
+  ds.innerHTML='<option value="">과 선택</option>'+ORG[org].depts.map(d=>`<option>${d}</option>`).join('');
   updateTeamField();
 }
 function updateTeamField(){
   const org=document.getElementById('loginOrg').value;
   const dept=document.getElementById('loginDept').value;
   const ts=document.getElementById('loginTeam');
-  ts.innerHTML='<option value="">팀 선택</option>'+
-    ((ORG[org]?.teams[dept])||[]).map(t=>`<option>${t}</option>`).join('');
+  ts.innerHTML='<option value="">팀 선택</option>'+((ORG[org]?.teams[dept])||[]).map(t=>`<option>${t}</option>`).join('');
 }
 
 /* ════════════════════════════════════════
-   2. 현장 원본 데이터
+   현장 데이터 (침수방지시설 29개 + 차수판 35개)
 ════════════════════════════════════════ */
 const ALARM_RAW=[
-  {no:1, dong:"병점동",addr:"화성시 병점3로 45-10, B101~5호"},
-  {no:2, dong:"병점동",addr:"화성시 떡전골로 55-2, 청록주택 102동 B101호"},
-  {no:3, dong:"병점동",addr:"화성시 태안로95번길 28-3, 가동 B102호"},
-  {no:4, dong:"병점동",addr:"화성시 태안로95번길 28-5, 동원빌라 나동 B102호"},
-  {no:5, dong:"병점동",addr:"화성시 태안로95번길 28-9, 동성빌라 나동 B101호"},
-  {no:6, dong:"병점동",addr:"화성시 태안로95번길 28-11, 동성빌라 가동 B101호"},
-  {no:7, dong:"병점동",addr:"화성시 떡전골로 53-4, 청록빌라 가동 B101호"},
-  {no:8, dong:"병점동",addr:"화성시 떡전골로 55-4, 101동 B101호"},
-  {no:9, dong:"병점동",addr:"화성시 태안로95번길 28-17, 다동 지층 101호·B102호"},
+  {no:1,dong:"병점동",addr:"화성시 병점3로 45-10, B101~5호"},
+  {no:2,dong:"병점동",addr:"화성시 떡전골로 55-2, 청록주택 102동 B101호"},
+  {no:3,dong:"병점동",addr:"화성시 태안로95번길 28-3, 가동 B102호"},
+  {no:4,dong:"병점동",addr:"화성시 태안로95번길 28-5, 동원빌라 나동 B102호"},
+  {no:5,dong:"병점동",addr:"화성시 태안로95번길 28-9, 동성빌라 나동 B101호"},
+  {no:6,dong:"병점동",addr:"화성시 태안로95번길 28-11, 동성빌라 가동 B101호"},
+  {no:7,dong:"병점동",addr:"화성시 떡전골로 53-4, 청록빌라 가동 B101호"},
+  {no:8,dong:"병점동",addr:"화성시 떡전골로 55-4, 101동 B101호"},
+  {no:9,dong:"병점동",addr:"화성시 태안로95번길 28-17, 다동 지층 101호·B102호"},
   {no:10,dong:"진안동",addr:"화성시 태안로226번길 28, 신세계빌라 6동 B04호"},
   {no:11,dong:"진안동",addr:"화성시 병점동로164번길 8, 화인빌라 101·2·3·4호"},
   {no:12,dong:"진안동",addr:"화성시 태안로226번길 22-5, 2동 B101~4호"},
@@ -623,15 +558,15 @@ const ALARM_RAW=[
   {no:29,dong:"향남읍",addr:"화성시 향남읍 발안남로25번길 3, 동광빌라 2동 B101호"},
 ];
 const WATER_RAW=[
-  {no:1, dong:"반월동",addr:"화성시 영통로 8번길 18 영진빌라 B동 101호"},
-  {no:2, dong:"병점동",addr:"화성시 태안로95번길 18-13 보성빌라 나동 102호"},
-  {no:3, dong:"병점동",addr:"화성시 병점3로 45-10 B01호"},
-  {no:4, dong:"병점동",addr:"화성시 병점3로 45-10 B02호"},
-  {no:5, dong:"병점동",addr:"화성시 병점3로 45-10 B03호"},
-  {no:6, dong:"병점동",addr:"화성시 병점3로 45-10 B04호"},
-  {no:7, dong:"병점동",addr:"화성시 병점3로 45-10 B05호"},
-  {no:8, dong:"병점동",addr:"화성시 떡전골로 55-2 청록빌라 102동 B101호"},
-  {no:9, dong:"병점동",addr:"화성시 태안로95번길 28-9 동성빌라 나동 B101호"},
+  {no:1,dong:"반월동",addr:"화성시 영통로 8번길 18 영진빌라 B동 101호"},
+  {no:2,dong:"병점동",addr:"화성시 태안로95번길 18-13 보성빌라 나동 102호"},
+  {no:3,dong:"병점동",addr:"화성시 병점3로 45-10 B01호"},
+  {no:4,dong:"병점동",addr:"화성시 병점3로 45-10 B02호"},
+  {no:5,dong:"병점동",addr:"화성시 병점3로 45-10 B03호"},
+  {no:6,dong:"병점동",addr:"화성시 병점3로 45-10 B04호"},
+  {no:7,dong:"병점동",addr:"화성시 병점3로 45-10 B05호"},
+  {no:8,dong:"병점동",addr:"화성시 떡전골로 55-2 청록빌라 102동 B101호"},
+  {no:9,dong:"병점동",addr:"화성시 태안로95번길 28-9 동성빌라 나동 B101호"},
   {no:10,dong:"화산동",addr:"화성시 만년로915번길 21-5 산성빌라 D동 B02호"},
   {no:11,dong:"진안동",addr:"화성시 병점동로164번길 8 화인빌라 101호"},
   {no:12,dong:"진안동",addr:"화성시 병점동로164번길 8 화인빌라 102호"},
@@ -662,10 +597,8 @@ const WATER_RAW=[
 
 /* ── 중복 판정 & 통합 현장 목록 ── */
 function norm(a){return a.replace(/\s+/g,'').replace(/[,·~]/g,'').toLowerCase();}
-function addrMatch(a,b){
-  const na=norm(a),nb=norm(b);
-  return na===nb||na.includes(nb)||nb.includes(na);
-}
+function addrMatch(a,b){const na=norm(a),nb=norm(b);return na===nb||na.includes(nb)||nb.includes(na);}
+
 let SITES=[];
 (function buildSites(){
   const usedA=new Set(),usedW=new Set();let id=1;
@@ -673,35 +606,22 @@ let SITES=[];
     WATER_RAW.forEach((w,wi)=>{
       if(addrMatch(a.addr,w.addr)){
         usedA.add(ai);usedW.add(wi);
-        SITES.push({id:id++,dong:a.dong,addr:a.addr,type:'both',
-          alarmNo:a.no,waterNo:w.no,assignee:'',org:'',dept:'',team:''});
+        SITES.push({id:id++,dong:a.dong,addr:a.addr,type:'both',alarmNo:a.no,waterNo:w.no});
       }
     });
   });
-  ALARM_RAW.forEach((a,ai)=>{
-    if(!usedA.has(ai))
-      SITES.push({id:id++,dong:a.dong,addr:a.addr,type:'alarm',
-        alarmNo:a.no,assignee:'',org:'',dept:'',team:''});
-  });
-  WATER_RAW.forEach((w,wi)=>{
-    if(!usedW.has(wi))
-      SITES.push({id:id++,dong:w.dong,addr:w.addr,type:'water',
-        waterNo:w.no,assignee:'',org:'',dept:'',team:''});
-  });
+  ALARM_RAW.forEach((a,ai)=>{if(!usedA.has(ai))SITES.push({id:id++,dong:a.dong,addr:a.addr,type:'alarm',alarmNo:a.no});});
+  WATER_RAW.forEach((w,wi)=>{if(!usedW.has(wi))SITES.push({id:id++,dong:w.dong,addr:w.addr,type:'water',waterNo:w.no});});
 })();
 
 const DONG_LIST=[...new Set(SITES.map(s=>s.dong))].sort((a,b)=>{
   const order=['반월동','병점동','진안동','화산동','안녕동','매송면','마도면','봉담읍','송산면','향남읍'];
-  return (order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b));
+  return(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b));
 });
-const DONG_ICON={
-  '반월동':'🌙','병점동':'🏘️','진안동':'🏠','화산동':'🌋',
-  '안녕동':'🌿','매송면':'🌾','마도면':'⚓','봉담읍':'🌸',
-  '송산면':'🍇','향남읍':'🌻'
-};
+const DONG_ICON={'반월동':'🌙','병점동':'🏘️','진안동':'🏠','화산동':'🌋','안녕동':'🌿','매송면':'🌾','마도면':'⚓','봉담읍':'🌸','송산면':'🍇','향남읍':'🌻'};
 
 /* ════════════════════════════════════════
-   3. 점검 항목
+   점검 항목
 ════════════════════════════════════════ */
 const ALARM_CHECKS=[
   {id:'a1',label:'침수방지시설 설치 위치 확인',desc:'출입구·창문·환기구 등 지정 위치에 정위치 설치 여부'},
@@ -727,110 +647,58 @@ const WATER_CHECKS=[
 ];
 
 /* ════════════════════════════════════════
-   4. 상태 관리 (Firebase + localStorage 혼용)
+   전역 변수
 ════════════════════════════════════════ */
-const STORAGE_KEY='hwaseong_flood_v4';
-function getState(){
-  const raw=localStorage.getItem(STORAGE_KEY);
-  if(raw){
-    const s=JSON.parse(raw);
-    s.sites=SITES.map(site=>{
-      const sv=s.sites?.find(ss=>ss.id===site.id);
-      return sv?{...site,assignee:sv.assignee,org:sv.org,dept:sv.dept,team:sv.team}:site;
-    });
-    return s;
-  }
-  return{sites:JSON.parse(JSON.stringify(SITES)),inspections:{}};
-}
-function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
-
-let state=getState();
 let currentUser={name:'',org:'',dept:'',team:''};
 let currentSiteId=null;
 let uploadedPhotos=[];
 let editingSiteId=null;
 let currentDong=null;
 let currentTypeFilter='all';
-
-/* ── Cloudinary 위젯 (전역) ── */
 let cloudWidget=null;
-function initCloudWidget(siteId){
-  cloudWidget=cloudinary.createUploadWidget(
-    {
-      cloudName:CLOUD_NAME,
-      uploadPreset:UPLOAD_PRESET,
-      sources:['local','camera'],
-      language:'ko',
-      maxFileSize:10000000,
-      multiple:true,
-      styles:{palette:{window:"#FFFFFF",windowBorder:"#1a56db",tabIcon:"#1a56db",link:"#1a56db",action:"#1a56db",error:"#ef4444",complete:"#10b981"}}
-    },
-    (error,result)=>{
-      if(!error&&result&&result.event==='success'){
-        const url=result.info.secure_url;
-        const caption=`${currentUser.name} | ${new Date().toLocaleTimeString('ko-KR')}`;
-        uploadedPhotos.push({src:url,caption});
-        const grid=document.getElementById('photoGrid');
-        if(grid){
-          const div=document.createElement('div');
-          div.className='photo-item';
-          div.innerHTML=`<img src="${url}" onclick="viewPhoto('${url}')"><div class="photo-caption">${caption}</div>`;
-          grid.appendChild(div);
-        }
-        showToast('📸 사진이 업로드되었습니다!');
-      }
-    }
-  );
-}
+let inspectionsData={};
+let assignmentsData={};
 
 /* ════════════════════════════════════════
-   5. 로그인
+   Firebase 실시간 리스너
 ════════════════════════════════════════ */
-function doLogin(){
-  const org=document.getElementById('loginOrg').value;
-  const dept=document.getElementById('loginDept')?.value||'';
-  const team=document.getElementById('loginTeam')?.value||'';
-  const name=document.getElementById('loginName').value.trim();
-  if(!org||!name){showToast('소속 구분과 이름을 입력해주세요.');return;}
-  currentUser={name,org,dept,team};
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('currentUserDisplay').textContent=
-    [org,dept,team,name].filter(Boolean).join(' ');
+function startRealtimeListeners(){
+  db.collection('inspections').onSnapshot(snapshot=>{
+    snapshot.docChanges().forEach(change=>{
+      const data=change.doc.data();
+      if(change.type==='removed') delete inspectionsData[data.siteId];
+      else inspectionsData[data.siteId]=data;
+    });
+    refreshAllViews();
+  });
+  db.collection('assignments').onSnapshot(snapshot=>{
+    snapshot.docChanges().forEach(change=>{
+      const data=change.doc.data();
+      if(change.type==='removed') delete assignmentsData[data.siteId];
+      else assignmentsData[data.siteId]=data;
+    });
+    refreshAllViews();
+  });
+}
+
+function refreshAllViews(){
   renderDongGrid();
-  renderAssignTable();
-  startClock();
+  if(currentDong) renderSiteGrid();
+  const activeTab=document.querySelector('.tab-content.active');
+  if(activeTab?.id==='tab-report') renderReport();
+  if(activeTab?.id==='tab-assign') renderAssignTable();
 }
 
 /* ════════════════════════════════════════
-   6. 유틸
+   헬퍼 함수
 ════════════════════════════════════════ */
-function startClock(){
-  const tick=()=>{
-    const n=new Date();
-    document.getElementById('liveTime').textContent=
-      n.toLocaleDateString('ko-KR')+' '+
-      n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  };
-  tick();setInterval(tick,1000);
-}
-function showTab(id,btn){
-  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if(btn)btn.classList.add('active');
-  if(id==='tab-report')renderReport();
-  if(id==='tab-assign')renderAssignTable();
-}
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
-}
-function getSiteStatus(site){
-  const ins=state.inspections[site.id];
+function getAssignment(siteId){return assignmentsData[siteId]||{assignee:'',org:'',dept:'',team:''};}
+function getInspection(siteId){return inspectionsData[siteId]||null;}
+function getSiteStatus(siteId){
+  const ins=getInspection(siteId);
   if(!ins||!ins.completed){
-    if(ins&&Object.keys(ins.checks||{}).length>0)return'progress';
-    return'waiting';
+    if(ins&&Object.keys(ins.checks||{}).length>0) return 'progress';
+    return 'waiting';
   }
   return Object.values(ins.checks||{}).some(v=>v==='ng')?'issue':'done';
 }
@@ -840,43 +708,85 @@ function getTotalChecks(site){
         (site.type==='both'?(ALARM_CHECKS.length+WATER_CHECKS.length):0);
 }
 function getProgressPct(site){
-  const ins=state.inspections[site.id];
-  if(!ins)return 0;
+  const ins=getInspection(site.id);
+  if(!ins) return 0;
   const total=getTotalChecks(site);
   return total?Math.round(Object.keys(ins.checks||{}).length/total*100):0;
 }
 
 /* ════════════════════════════════════════
-   7. STEP 1 — 동 선택 화면
+   로그인
+════════════════════════════════════════ */
+function doLogin(){
+  const org=document.getElementById('loginOrg').value;
+  const dept=document.getElementById('loginDept')?.value||'';
+  const team=document.getElementById('loginTeam')?.value||'';
+  const name=document.getElementById('loginName').value.trim();
+  if(!org||!name){showToast('소속 구분과 이름을 입력해주세요.');return;}
+  currentUser={name,org,dept,team};
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('currentUserDisplay').textContent=[org,dept,team,name].filter(Boolean).join(' ');
+  // 본청 관리자만 전체 다운로드 섹션 표시
+  if(org==='본청') document.getElementById('dlSection').style.display='block';
+  startRealtimeListeners();
+  startClock();
+}
+
+/* ════════════════════════════════════════
+   유틸
+════════════════════════════════════════ */
+function startClock(){
+  const tick=()=>{
+    const n=new Date();
+    document.getElementById('liveTime').textContent=
+      n.toLocaleDateString('ko-KR')+' '+n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  };
+  tick();setInterval(tick,1000);
+}
+function showTab(id,btn){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='tab-report') renderReport();
+  if(id==='tab-assign') renderAssignTable();
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+/* ════════════════════════════════════════
+   동 선택 화면
 ════════════════════════════════════════ */
 function renderDongGrid(){
   const kw=(document.getElementById('dongSearchInput')?.value||'').trim();
   const filtered=kw?DONG_LIST.filter(d=>d.includes(kw)):DONG_LIST;
   const grid=document.getElementById('dongGrid');
   if(!filtered.length){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;">
-      <div class="empty-icon">🔍</div><p>"${kw}"에 해당하는 지역이 없습니다.</p></div>`;
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🔍</div><p>"${kw}"에 해당하는 지역이 없습니다.</p></div>`;
     return;
   }
   grid.innerHTML=filtered.map(dong=>{
-    const dongSites=state.sites.filter(s=>s.dong===dong);
-    const total=dongSites.length;
-    const done=dongSites.filter(s=>getSiteStatus(s)==='done').length;
-    const issue=dongSites.filter(s=>getSiteStatus(s)==='issue').length;
-    const prog=dongSites.filter(s=>getSiteStatus(s)==='progress').length;
+    const ds=SITES.filter(s=>s.dong===dong);
+    const total=ds.length;
+    const done=ds.filter(s=>getSiteStatus(s.id)==='done').length;
+    const issue=ds.filter(s=>getSiteStatus(s.id)==='issue').length;
+    const prog=ds.filter(s=>getSiteStatus(s.id)==='progress').length;
     const wait=total-done-issue-prog;
-    const hasMyAssign=dongSites.some(s=>s.assignee===currentUser.name);
-    const cardCls=issue>0?'has-issue':(done+issue===total?'all-done':'');
+    const hasMe=ds.some(s=>getAssignment(s.id).assignee===currentUser.name);
+    const cardCls=issue>0?'has-issue':(done+issue===total&&total>0?'all-done':'');
     let badges='';
-    if(done>0) badges+=`<span class="dong-mini-badge dmb-done">✅ 완료 ${done}</span>`;
-    if(issue>0)badges+=`<span class="dong-mini-badge dmb-issue">⚠️ 부적합 ${issue}</span>`;
-    if(prog>0) badges+=`<span class="dong-mini-badge dmb-prog">🔄 진행 ${prog}</span>`;
-    if(wait>0) badges+=`<span class="dong-mini-badge dmb-wait">⏳ 대기 ${wait}</span>`;
+    if(done>0) badges+=`<span class="dong-mini-badge dmb-done">✅${done}</span>`;
+    if(issue>0)badges+=`<span class="dong-mini-badge dmb-issue">⚠️${issue}</span>`;
+    if(prog>0) badges+=`<span class="dong-mini-badge dmb-prog">🔄${prog}</span>`;
+    if(wait>0) badges+=`<span class="dong-mini-badge dmb-wait">⏳${wait}</span>`;
     return`<div class="dong-card ${cardCls}" onclick="selectDong('${dong}')">
-      ${hasMyAssign?'<div class="my-badge">내 담당</div>':''}
+      ${hasMe?'<div class="my-badge">내 담당</div>':''}
       <div class="dong-icon">${DONG_ICON[dong]||'📍'}</div>
       <div class="dong-name">${dong}</div>
-      <div class="dong-count">현장 ${total}개소</div>
+      <div class="dong-count">${total}개소</div>
       <div class="dong-status-bar">${badges}</div>
     </div>`;
   }).join('');
@@ -888,13 +798,11 @@ function tryDirectEnter(){
 }
 
 /* ════════════════════════════════════════
-   8. STEP 2 — 현장 목록 화면
+   현장 목록
 ════════════════════════════════════════ */
 function selectDong(dong){
   currentDong=dong;currentTypeFilter='all';
-  document.querySelectorAll('.type-filter-btn').forEach(b=>{
-    b.classList.toggle('active',b.textContent.includes('전체'));
-  });
+  document.querySelectorAll('.type-filter-btn').forEach(b=>b.classList.toggle('active',b.textContent.includes('전체')));
   document.getElementById('dongSelectScreen').style.display='none';
   document.getElementById('siteListScreen').style.display='block';
   document.getElementById('siteListTitle').textContent=`📍 ${dong} 현장 목록`;
@@ -914,75 +822,99 @@ function setTypeFilter(type,btn){
 }
 function renderSiteGrid(){
   if(!currentDong)return;
-  let sites=state.sites.filter(s=>s.dong===currentDong);
+  let sites=SITES.filter(s=>s.dong===currentDong);
   if(currentTypeFilter!=='all')sites=sites.filter(s=>s.type===currentTypeFilter);
-  const stMap={
-    waiting:{label:'⏳ 점검 대기',cls:'s-wait'},
-    progress:{label:'🔄 점검 중',cls:'s-prog'},
-    done:{label:'✅ 점검 완료',cls:'s-done'},
-    issue:{label:'⚠️ 부적합',cls:'s-issue'},
-  };
+  const stMap={waiting:{label:'⏳ 대기',cls:'s-wait'},progress:{label:'🔄 진행중',cls:'s-prog'},done:{label:'✅ 완료',cls:'s-done'},issue:{label:'⚠️ 부적합',cls:'s-issue'}};
   const typeTag={
     alarm:`<span class="tag tag-alarm">🔔 침수방지시설</span>`,
     water:`<span class="tag tag-water">🛡️ 차수판</span>`,
-    both:`<span class="tag tag-alarm">🔔 침수방지시설</span><span class="tag tag-both">🔄 중복</span><span class="tag tag-water">🛡️ 차수판</span>`,
+    both:`<span class="tag tag-alarm">🔔 침수방지시설</span><span class="tag tag-both">🔄 중복</span><span class="tag tag-water">🛡️ 차수판</span>`
   };
   let myCount=0;
   const grid=document.getElementById('siteGrid');
   if(!sites.length){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;">
-      <div class="empty-icon">📭</div><p>해당 유형의 현장이 없습니다.</p></div>`;
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📭</div><p>해당 유형의 현장이 없습니다.</p></div>`;
     document.getElementById('siteListCount').textContent='';return;
   }
   grid.innerHTML=sites.map(site=>{
-    const st=getSiteStatus(site);
+    const st=getSiteStatus(site.id);
     const pct=getProgressPct(site);
-    const isMe=site.assignee===currentUser.name;
+    const asgn=getAssignment(site.id);
+    const isMe=asgn.assignee===currentUser.name;
     if(isMe)myCount++;
     const cardCls=st==='done'?'completed':st==='progress'?'in-progress':st==='issue'?'has-issue':'';
     const stInfo=stMap[st];
-    const addrShort=site.addr.replace('화성시 ','');
+    const ins=getInspection(site.id);
+    const checkedCount=Object.keys(ins?.checks||{}).length;
     return`<div class="site-card ${cardCls}" onclick="openCheckModal(${site.id})">
-      <div class="site-name">📍 ${addrShort}</div>
+      <div class="site-name">📍 ${site.addr.replace('화성시 ','')}</div>
       <div class="dual-badge">${typeTag[site.type]}</div>
       <div class="site-addr">
-        👤 담당: <strong>${site.assignee||'미배정'}</strong>
-        ${site.org?`<span style="color:#718096">(${site.org} ${site.team})</span>`:''}
+        👤 담당: <strong>${asgn.assignee||'미배정'}</strong>
+        ${asgn.org?`<span style="color:#718096">(${asgn.org} ${asgn.team})</span>`:''}
         ${isMe?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.66rem;margin-left:4px;">내 담당</span>':''}
       </div>
       <div style="margin-top:6px;"><span class="site-status ${stInfo.cls}">${stInfo.label}</span></div>
       <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
-      <div style="font-size:.72rem;color:#718096;margin-top:3px;">
-        진행률: ${pct}% (${Object.keys(state.inspections[site.id]?.checks||{}).length}/${getTotalChecks(site)})
-      </div>
+      <div style="font-size:.72rem;color:#718096;margin-top:3px;">진행률: ${pct}% (${checkedCount}/${getTotalChecks(site)})</div>
     </div>`;
   }).join('');
-  document.getElementById('siteListCount').textContent=
-    `전체 ${sites.length}개소 | 내 담당 ${myCount}개소`;
+  document.getElementById('siteListCount').textContent=`전체 ${sites.length}개소 | 내 담당 ${myCount}개소`;
 }
 
 /* ════════════════════════════════════════
-   9. 점검표 모달
+   Cloudinary 위젯 (전역 1회 초기화)
+════════════════════════════════════════ */
+function getCloudWidget(){
+  if(cloudWidget)return cloudWidget;
+  cloudWidget=cloudinary.createUploadWidget(
+    {cloudName:CLOUD_NAME,uploadPreset:UPLOAD_PRESET,sources:['local','camera'],language:'ko',maxFileSize:10000000,multiple:true,
+     styles:{palette:{window:"#FFFFFF",windowBorder:"#1a56db",tabIcon:"#1a56db",link:"#1a56db",action:"#1a56db",error:"#ef4444",complete:"#10b981"}}},
+    (error,result)=>{
+      if(error){showToast('❌ 사진 업로드 오류: '+error.message);return;}
+      if(result&&result.event==='success'){
+        const url=result.info.secure_url;
+        const caption=`${currentUser.name} | ${new Date().toLocaleTimeString('ko-KR')}`;
+        uploadedPhotos.push({src:url,caption});
+        const grid=document.getElementById('photoGrid');
+        if(grid){
+          const div=document.createElement('div');div.className='photo-item';
+          div.innerHTML=`<img src="${url}" onclick="viewPhoto('${url}')"><div class="photo-caption">${caption}</div>`;
+          grid.appendChild(div);
+        }
+        showToast('📸 사진 업로드 완료!');
+      }
+    }
+  );
+  return cloudWidget;
+}
+function openPhotoUpload(){
+  if(!currentSiteId){showToast('⚠️ 현장 카드를 먼저 클릭해주세요.');return;}
+  getCloudWidget().open();
+}
+
+/* ════════════════════════════════════════
+   점검표 모달
 ════════════════════════════════════════ */
 function openCheckModal(siteId){
-  const site=state.sites.find(s=>s.id===siteId);
+  const site=SITES.find(s=>s.id===siteId);
   if(!site)return;
   currentSiteId=siteId;uploadedPhotos=[];
-  initCloudWidget(siteId); // Cloudinary 위젯 초기화
 
-  const ins=state.inspections[siteId]||{};
+  const ins=getInspection(siteId)||{};
+  const asgn=getAssignment(siteId);
   const savedChecks=ins.checks||{},savedMemos=ins.memos||{};
   const savedPhotos=ins.photos||[],prevPhotos=ins.prevPhotos||[];
   const typeLabel={alarm:'침수방지시설',water:'차수판',both:'침수방지시설+차수판(중복)'};
 
-  document.getElementById('modalTitle').textContent=
-    `📋 ${site.dong} [${typeLabel[site.type]}] 점검표`;
+  document.getElementById('modalTitle').textContent=`📋 ${site.dong} [${typeLabel[site.type]}] 점검표`;
 
   let html=`<div class="info-box">
     📍 <strong>${site.addr}</strong><br>
-    👤 담당: <strong>${site.assignee||'미배정'}</strong>
-    ${site.org?`(${site.org} ${site.dept} ${site.team})`:''}
+    👤 담당: <strong>${asgn.assignee||'미배정'}</strong>
+    ${asgn.org?`(${asgn.org} ${asgn.dept} ${asgn.team})`:''}
     ${ins.time?`&nbsp;|&nbsp;🕐 최종저장: ${ins.time}`:''}
+    ${ins.inspector?`<br>✏️ 마지막 점검자: <strong>${ins.inspector}</strong>`:''}
   </div>`;
 
   if(site.type==='alarm'||site.type==='both'){
@@ -994,34 +926,30 @@ function openCheckModal(siteId){
     html+=renderCheckItems(WATER_CHECKS,savedChecks,savedMemos);
   }
 
-  // ── Cloudinary 사진 업로드 ──
   html+=`<div class="section-divider">📸 현장 사진 업로드</div>
-  <button class="btn-cloud-photo" onclick="cloudWidget.open()">
+  <button class="btn-cloud-photo" onclick="openPhotoUpload()">
     📷 사진 선택 / 카메라 촬영 (여러 장 가능)
   </button>
   <div class="photo-grid" id="photoGrid">`;
   savedPhotos.forEach(p=>{
-    html+=`<div class="photo-item">
-      <img src="${p.src}" onclick="viewPhoto('${p.src}')">
-      <div class="photo-caption">${p.caption||'현장사진'}</div>
-    </div>`;
+    const src=typeof p==='string'?p:p.src;
+    const cap=typeof p==='string'?'현장사진':p.caption||'현장사진';
+    html+=`<div class="photo-item"><img src="${src}" onclick="viewPhoto('${src}')"><div class="photo-caption">${cap}</div></div>`;
   });
   html+=`</div>`;
 
   if(prevPhotos.length){
     html+=`<div class="section-divider">🕐 이전 점검 사진 (비교용)</div><div class="photo-grid">`;
     prevPhotos.forEach(p=>{
-      html+=`<div class="photo-item">
-        <img src="${p.src}" onclick="viewPhoto('${p.src}')">
-        <div class="photo-caption">${p.caption||'이전 점검'}</div>
-      </div>`;
+      const src=typeof p==='string'?p:p.src;
+      const cap=typeof p==='string'?'이전 점검':p.caption||'이전 점검';
+      html+=`<div class="photo-item"><img src="${src}" onclick="viewPhoto('${src}')"><div class="photo-caption">${cap}</div></div>`;
     });
     html+=`</div>`;
   }
 
   html+=`<div class="section-divider">📝 종합 의견</div>
-  <textarea id="overallNote"
-    style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;font-size:.84rem;font-family:inherit;"
+  <textarea id="overallNote" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;font-size:.84rem;font-family:inherit;"
     placeholder="전체 점검 후 종합 의견을 입력하세요.">${ins.note||''}</textarea>`;
 
   document.getElementById('modalBody').innerHTML=html;
@@ -1041,182 +969,166 @@ function renderCheckItems(items,savedChecks,savedMemos){
           <button class="btn-check ng ${val==='ng'?'selected':''}" onclick="selectCheck('${item.id}','ng',this)">❌ 부적합</button>
           <button class="btn-check na ${val==='na'?'selected':''}" onclick="selectCheck('${item.id}','na',this)">➖ 해당없음</button>
         </div>
-        <textarea class="check-memo" id="memo_${item.id}"
-          placeholder="특이사항 메모 (부적합 시 사유 필수)">${savedMemos[item.id]||''}</textarea>
+        <textarea class="check-memo" id="memo_${item.id}" placeholder="특이사항 메모 (부적합 시 사유 필수)">${savedMemos[item.id]||''}</textarea>
       </div>
     </div>`;
   }).join('');
 }
-
 function closeModal(){
   document.getElementById('checkModal').classList.remove('open');
   currentSiteId=null;uploadedPhotos=[];
 }
-
-/* ════════════════════════════════════════
-   10. 체크 & 사진
-════════════════════════════════════════ */
 function selectCheck(itemId,val,btn){
   btn.closest('.check-buttons').querySelectorAll('.btn-check').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
-  if(!state.inspections[currentSiteId])state.inspections[currentSiteId]={checks:{},memos:{}};
-  state.inspections[currentSiteId].checks[itemId]=val;
 }
 function viewPhoto(src){window.open(src,'_blank');}
 
 /* ════════════════════════════════════════
-   11. 점검 저장 (Firebase + localStorage)
+   점검 저장 → Firebase
 ════════════════════════════════════════ */
 async function saveInspection(){
   if(!currentSiteId)return;
-  const site=state.sites.find(s=>s.id===currentSiteId);
-  if(!state.inspections[currentSiteId])state.inspections[currentSiteId]={checks:{},memos:{}};
-  const ins=state.inspections[currentSiteId];
+  const site=SITES.find(s=>s.id===currentSiteId);
+  const saveBtn=document.getElementById('saveBtn');
+  saveBtn.disabled=true;saveBtn.textContent='💾 저장 중...';
 
-  ins.memos={};
+  // 체크 수집
+  const checks={};
+  document.querySelectorAll('.btn-check.selected').forEach(btn=>{
+    const match=btn.getAttribute('onclick').match(/'([^']+)'/);
+    if(match){
+      const itemId=match[1];
+      const val=btn.classList.contains('ok')?'ok':btn.classList.contains('ng')?'ng':'na';
+      checks[itemId]=val;
+    }
+  });
+
+  // 메모 수집
+  const memos={};
   [...ALARM_CHECKS,...WATER_CHECKS].forEach(item=>{
     const el=document.getElementById(`memo_${item.id}`);
-    if(el)ins.memos[item.id]=el.value;
+    if(el&&el.value.trim())memos[item.id]=el.value.trim();
   });
-  const noteEl=document.getElementById('overallNote');
-  if(noteEl)ins.note=noteEl.value;
 
-  if(!ins.prevPhotos)ins.prevPhotos=[];
-  if(ins.photos?.length)ins.prevPhotos=[...ins.prevPhotos,...ins.photos].slice(-8);
-  ins.photos=uploadedPhotos.length>0?uploadedPhotos:(ins.photos||[]);
+  const note=document.getElementById('overallNote')?.value||'';
+  const prevIns=getInspection(currentSiteId)||{};
+  let prevPhotos=prevIns.prevPhotos||[];
+  if(prevIns.photos?.length) prevPhotos=[...prevPhotos,...prevIns.photos].slice(-8);
+  const currentPhotos=uploadedPhotos.length>0
+    ?uploadedPhotos.map(p=>({src:p.src,caption:p.caption}))
+    :(prevIns.photos||[]);
 
-  ins.inspector=currentUser.name;
-  ins.org=currentUser.org;ins.dept=currentUser.dept;ins.team=currentUser.team;
-  ins.time=new Date().toLocaleString('ko-KR');
-  ins.completed=true;
-
-  if(!site.assignee&&currentUser.name){
-    site.assignee=currentUser.name;
-    site.org=currentUser.org;site.dept=currentUser.dept;site.team=currentUser.team;
-  }
-
-  // Firebase에도 저장
   try{
     await db.collection('inspections').doc(String(currentSiteId)).set({
-      siteId:currentSiteId,
-      dong:site.dong,
-      addr:site.addr,
-      type:site.type,
-      checks:ins.checks,
-      memos:ins.memos,
-      note:ins.note||'',
-      photos:ins.photos.map(p=>p.src),
-      inspector:ins.inspector,
-      org:ins.org,dept:ins.dept,team:ins.team,
-      assignee:site.assignee,
-      time:ins.time,
-      completed:true,
+      siteId:currentSiteId,dong:site.dong,addr:site.addr,type:site.type,
+      checks,memos,note,
+      photos:currentPhotos,prevPhotos,
+      inspector:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
+      time:new Date().toLocaleString('ko-KR'),completed:true,
       savedAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-  }catch(e){console.warn('Firebase 저장 실패(로컬에는 저장됨):',e);}
-
-  saveState();
-  renderSiteGrid();
-  renderDongGrid();
-  closeModal();
-  showToast(`✅ "${site.dong}" 현장 점검 결과가 저장되었습니다!`);
+    showToast(`✅ "${site.dong}" 점검 결과가 모든 사용자에게 공유되었습니다!`);
+    closeModal();
+  }catch(err){
+    showToast('❌ 저장 실패: '+err.message);
+    console.error(err);
+  }
+  saveBtn.disabled=false;saveBtn.textContent='💾 점검 완료 저장';
 }
 
 /* ════════════════════════════════════════
-   12. 담당자 배정
+   담당자 배정
 ════════════════════════════════════════ */
 function renderAssignTable(){
   const stMap={
     waiting:'<span class="site-status s-wait">⏳ 대기</span>',
     progress:'<span class="site-status s-prog">🔄 진행중</span>',
     done:'<span class="site-status s-done">✅ 완료</span>',
-    issue:'<span class="site-status s-issue">⚠️ 부적합</span>',
+    issue:'<span class="site-status s-issue">⚠️ 부적합</span>'
   };
   const typeLabel={alarm:'🔔 침수방지시설',water:'🛡️ 차수판',both:'🔔+🛡️ 중복'};
   const isAdmin=currentUser.org==='본청';
-  document.getElementById('assignTableBody').innerHTML=
-    state.sites.map((site,idx)=>{
-      const st=getSiteStatus(site);
-      return`<tr>
-        <td>${idx+1}</td>
-        <td><strong>${site.dong}</strong></td>
-        <td style="font-size:.76rem;">${site.addr}</td>
-        <td>${typeLabel[site.type]}</td>
-        <td><strong>${site.assignee||'<span style="color:#a0aec0">미배정</span>'}</strong></td>
-        <td style="font-size:.76rem;">${site.org||'-'} ${site.team||''}</td>
-        <td>${stMap[st]}</td>
-        <td>${isAdmin
-          ?`<button class="btn btn-sm btn-secondary" onclick="openAssignModal(${site.id})">✏️ 변경</button>`
-          :`<button class="btn btn-sm btn-primary" onclick="selfAssign(${site.id})">🙋 내가 맡기</button>`
-        }</td>
-      </tr>`;
-    }).join('');
+  document.getElementById('assignTableBody').innerHTML=SITES.map((site,idx)=>{
+    const st=getSiteStatus(site.id);
+    const asgn=getAssignment(site.id);
+    return`<tr>
+      <td data-label="#">${idx+1}</td>
+      <td data-label="지역"><strong>${site.dong}</strong></td>
+      <td data-label="주소" style="font-size:.76rem;">${site.addr}</td>
+      <td data-label="시설">${typeLabel[site.type]}</td>
+      <td data-label="담당자"><strong>${asgn.assignee||'<span style="color:#a0aec0">미배정</span>'}</strong></td>
+      <td data-label="소속" style="font-size:.76rem;">${asgn.org||'-'} ${asgn.team||''}</td>
+      <td data-label="상태">${stMap[st]}</td>
+      <td>${isAdmin
+        ?`<button class="btn btn-sm btn-secondary" onclick="openAssignModal(${site.id})">✏️ 변경</button>`
+        :`<button class="btn btn-sm btn-primary" onclick="selfAssign(${site.id})">🙋 내가 맡기</button>`
+      }</td>
+    </tr>`;
+  }).join('');
 }
 function openAssignModal(siteId){
   editingSiteId=siteId;
-  const site=state.sites.find(s=>s.id===siteId);
-  const orgOpts=Object.keys(ORG).map(o=>`<option value="${o}" ${site.org===o?'selected':''}>${o}</option>`).join('');
+  const site=SITES.find(s=>s.id===siteId);
+  const asgn=getAssignment(siteId);
+  const orgOpts=Object.keys(ORG).map(o=>`<option value="${o}" ${asgn.org===o?'selected':''}>${o}</option>`).join('');
   document.getElementById('assignModalContent').innerHTML=`
-    <p style="margin-bottom:10px;">현장: <strong>${site.addr}</strong></p>
-    <select id="asgOrg" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;" onchange="updateAsgFields()">
+    <p style="margin-bottom:10px;font-size:.88rem;">현장: <strong>${site.addr}</strong></p>
+    <select id="asgOrg" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;font-family:inherit;" onchange="updateAsgFields()">
       <option value="">소속 선택</option>${orgOpts}
     </select>
-    <select id="asgDept" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"></select>
-    <select id="asgTeam" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"></select>
-    <input type="text" id="asgName" value="${site.assignee||''}" placeholder="담당자 이름"
-      style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;">`;
+    <select id="asgDept" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;font-family:inherit;"></select>
+    <select id="asgTeam" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;font-family:inherit;"></select>
+    <input type="text" id="asgName" value="${asgn.assignee||''}" placeholder="담당자 이름"
+      style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;">`;
   document.getElementById('assignModal').classList.add('open');
-  if(site.org)updateAsgFields(site.org,site.dept,site.team);
+  if(asgn.org)updateAsgFields(asgn.org,asgn.dept,asgn.team);
 }
 function updateAsgFields(preOrg,preDept,preTeam){
   const org=preOrg||document.getElementById('asgOrg')?.value;
   if(!org||!ORG[org])return;
-  const ds=document.getElementById('asgDept');
-  const ts=document.getElementById('asgTeam');
-  ds.innerHTML='<option value="">과 선택</option>'+
-    ORG[org].depts.map(d=>`<option ${d===preDept?'selected':''}>${d}</option>`).join('');
+  const ds=document.getElementById('asgDept'),ts=document.getElementById('asgTeam');
+  ds.innerHTML='<option value="">과 선택</option>'+ORG[org].depts.map(d=>`<option ${d===preDept?'selected':''}>${d}</option>`).join('');
   const dept=preDept||ds.value;
-  ts.innerHTML='<option value="">팀 선택</option>'+
-    (ORG[org].teams[dept]||[]).map(t=>`<option ${t===preTeam?'selected':''}>${t}</option>`).join('');
-  ds.onchange=()=>{
-    const d=ds.value;
-    ts.innerHTML='<option value="">팀 선택</option>'+
-      (ORG[org].teams[d]||[]).map(t=>`<option>${t}</option>`).join('');
-  };
+  ts.innerHTML='<option value="">팀 선택</option>'+(ORG[org].teams[dept]||[]).map(t=>`<option ${t===preTeam?'selected':''}>${t}</option>`).join('');
+  ds.onchange=()=>{const d=ds.value;ts.innerHTML='<option value="">팀 선택</option>'+(ORG[org].teams[d]||[]).map(t=>`<option>${t}</option>`).join('');};
 }
-function saveAssign(){
+async function saveAssign(){
   const name=document.getElementById('asgName').value.trim();
   const org=document.getElementById('asgOrg').value;
   const dept=document.getElementById('asgDept').value;
   const team=document.getElementById('asgTeam').value;
   if(!name){showToast('담당자 이름을 입력해주세요.');return;}
-  const site=state.sites.find(s=>s.id===editingSiteId);
-  Object.assign(site,{assignee:name,org,dept,team});
-  saveState();renderAssignTable();renderDongGrid();closeAssignModal();
-  showToast(`✅ 담당자가 "${name}"으로 변경되었습니다.`);
+  try{
+    await db.collection('assignments').doc(String(editingSiteId)).set({
+      siteId:editingSiteId,assignee:name,org,dept,team,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeAssignModal();showToast(`✅ 담당자가 "${name}"으로 변경되었습니다.`);
+  }catch(e){showToast('❌ 저장 실패: '+e.message);}
 }
-function selfAssign(siteId){
-  const site=state.sites.find(s=>s.id===siteId);
-  if(site.assignee&&site.assignee!==currentUser.name)
-    if(!confirm(`이미 "${site.assignee}"님이 담당 중입니다. 변경하시겠습니까?`))return;
-  Object.assign(site,{assignee:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team});
-  saveState();renderAssignTable();renderDongGrid();
-  showToast(`✅ "${site.dong}" 현장을 담당으로 등록했습니다.`);
+async function selfAssign(siteId){
+  const asgn=getAssignment(siteId);
+  if(asgn.assignee&&asgn.assignee!==currentUser.name)
+    if(!confirm(`이미 "${asgn.assignee}"님이 담당 중입니다. 변경하시겠습니까?`))return;
+  try{
+    await db.collection('assignments').doc(String(siteId)).set({
+      siteId,assignee:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ 담당으로 등록되었습니다.');
+  }catch(e){showToast('❌ 저장 실패: '+e.message);}
 }
 function closeAssignModal(){document.getElementById('assignModal').classList.remove('open');}
 
 /* ════════════════════════════════════════
-   13. 결과 보고서
+   결과 보고서
 ════════════════════════════════════════ */
 function renderReport(){
-  const sites=state.sites;
-  let total=sites.length,done=0,issue=0,prog=0,wait=0,both=0;
-  sites.forEach(s=>{
-    const st=getSiteStatus(s);
-    if(st==='done')done++;
-    else if(st==='issue'){done++;issue++;}
-    else if(st==='progress')prog++;
-    else wait++;
+  let total=SITES.length,done=0,issue=0,prog=0,wait=0,both=0;
+  SITES.forEach(s=>{
+    const st=getSiteStatus(s.id);
+    if(st==='done')done++;else if(st==='issue'){done++;issue++;}else if(st==='progress')prog++;else wait++;
     if(s.type==='both')both++;
   });
   document.getElementById('reportSummary').innerHTML=`
@@ -1231,55 +1143,56 @@ function renderReport(){
     waiting:'<span style="color:#718096">⏳ 대기</span>',
     progress:'<span style="color:#d97706">🔄 진행중</span>',
     done:'<span style="color:#059669">✅ 완료</span>',
-    issue:'<span style="color:#dc2626">⚠️ 부적합</span>',
+    issue:'<span style="color:#dc2626">⚠️ 부적합</span>'
   };
-  const rows=sites.map((site,idx)=>{
-    const ins=state.inspections[site.id]||{};
+  const rows=SITES.map((site,idx)=>{
+    const ins=getInspection(site.id)||{};
+    const asgn=getAssignment(site.id);
     const checks=ins.checks||{};
     const ok=Object.values(checks).filter(v=>v==='ok').length;
     const ng=Object.values(checks).filter(v=>v==='ng').length;
     const na=Object.values(checks).filter(v=>v==='na').length;
-    const st=getSiteStatus(site);
+    const st=getSiteStatus(site.id);
+    const hasPhoto=(ins.photos?.length||0)+(ins.prevPhotos?.length||0);
     return`<tr class="clickable" onclick="openDetailModal(${site.id})">
-      <td>${idx+1}</td>
-      <td><strong>${site.dong}</strong></td>
-      <td style="font-size:.76rem;">${site.addr}</td>
-      <td>${typeLabel[site.type]}</td>
-      <td>${ins.inspector||site.assignee||'-'}</td>
-      <td style="font-size:.74rem;">${ins.org||site.org||'-'} ${ins.team||site.team||''}</td>
-      <td style="color:#059669;font-weight:bold;">${ok}</td>
-      <td style="color:#dc2626;font-weight:bold;">${ng}</td>
-      <td style="color:#718096;">${Object.keys(checks).length===0?'미점검':na}</td>
-      <td>${stBadge[st]||''}</td>
-      <td style="font-size:.72rem;color:#718096;">${ins.time||'-'}</td>
+      <td data-label="#">${idx+1}</td>
+      <td data-label="지역"><strong>${site.dong}</strong></td>
+      <td data-label="주소" style="font-size:.76rem;">${site.addr.replace('화성시 ','')}</td>
+      <td data-label="시설">${typeLabel[site.type]}</td>
+      <td data-label="점검자">${ins.inspector||asgn.assignee||'-'}</td>
+      <td data-label="소속" style="font-size:.74rem;">${ins.org||asgn.org||'-'} ${ins.team||asgn.team||''}</td>
+      <td data-label="✅적합" style="color:#059669;font-weight:bold;">${ok}</td>
+      <td data-label="❌부적합" style="color:#dc2626;font-weight:bold;">${ng}</td>
+      <td data-label="➖해당없음" style="color:#718096;">${Object.keys(checks).length===0?'미점검':na}</td>
+      <td data-label="📸사진">${hasPhoto>0?`📸 ${hasPhoto}장`:'없음'}</td>
+      <td data-label="상태">${stBadge[st]||''}</td>
+      <td data-label="저장시각" style="font-size:.72rem;color:#718096;">${ins.time||'-'}</td>
     </tr>`;
   }).join('');
   document.getElementById('reportDetail').innerHTML=`
     <table class="data-table">
       <thead><tr>
-        <th>#</th><th>지역</th><th>주소</th><th>시설유형</th>
+        <th>#</th><th>지역</th><th>주소</th><th>시설</th>
         <th>점검자</th><th>소속/팀</th>
         <th>✅적합</th><th>❌부적합</th><th>➖해당없음</th>
-        <th>상태</th><th>저장시각</th>
+        <th>📸사진</th><th>상태</th><th>저장시각</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
 
 /* ════════════════════════════════════════
-   14. 세부 결과 팝업
+   세부 결과 팝업
 ════════════════════════════════════════ */
 function openDetailModal(siteId){
-  const site=state.sites.find(s=>s.id===siteId);
-  const ins=state.inspections[siteId];
+  const site=SITES.find(s=>s.id===siteId);
+  const ins=getInspection(siteId);
   if(!ins||!ins.completed){showToast('아직 점검이 완료되지 않은 현장입니다.');return;}
   const checks=ins.checks||{},memos=ins.memos||{};
   const typeLabel={alarm:'침수방지시설',water:'차수판',both:'침수방지시설+차수판'};
   const valLabel={ok:'✅ 적합',ng:'❌ 부적합',na:'➖ 해당없음','':'⬜ 미점검'};
 
-  document.getElementById('detailModalTitle').textContent=
-    `📋 ${site.dong} · ${typeLabel[site.type]} 점검 세부 결과`;
-
+  document.getElementById('detailModalTitle').textContent=`📋 ${site.dong} · ${typeLabel[site.type]} 점검 세부 결과`;
   let html=`<div class="info-box">
     📍 ${site.addr}<br>
     👤 점검자: <strong>${ins.inspector||'-'}</strong>
@@ -1288,8 +1201,7 @@ function openDetailModal(siteId){
   </div>`;
 
   if(site.type==='alarm'||site.type==='both'){
-    html+=`<div class="section-divider">🔔 침수방지시설 점검 결과</div>
-    <div class="detail-check-grid">`;
+    html+=`<div class="section-divider">🔔 침수방지시설 점검 결과</div><div class="detail-check-grid">`;
     ALARM_CHECKS.forEach(item=>{
       const v=checks[item.id]||'';const memo=memos[item.id]||'';
       html+=`<div class="detail-check-item ${v}">
@@ -1301,8 +1213,7 @@ function openDetailModal(siteId){
     html+=`</div>`;
   }
   if(site.type==='water'||site.type==='both'){
-    html+=`<div class="section-divider">🛡️ 차수판 점검 결과</div>
-    <div class="detail-check-grid">`;
+    html+=`<div class="section-divider">🛡️ 차수판 점검 결과</div><div class="detail-check-grid">`;
     WATER_CHECKS.forEach(item=>{
       const v=checks[item.id]||'';const memo=memos[item.id]||'';
       html+=`<div class="detail-check-item ${v}">
@@ -1314,42 +1225,143 @@ function openDetailModal(siteId){
     html+=`</div>`;
   }
 
-  if(ins.note){
-    html+=`<div class="section-divider">📝 종합 의견</div>
+  if(ins.note)html+=`<div class="section-divider">📝 종합 의견</div>
     <div style="background:#f7fafc;padding:12px;border-radius:8px;font-size:.84rem;line-height:1.7;">${ins.note}</div>`;
-  }
 
   const allPhotos=[...(ins.photos||[]),...(ins.prevPhotos||[])];
   if(allPhotos.length){
-    html+=`<div class="section-divider">📸 현장 사진 (클릭: 확대 | ⬇️ 다운로드)</div>
-    <div class="photo-dl-grid">`;
+    html+=`<div class="section-divider">📸 현장 사진 (클릭: 확대 | ⬇️ 다운로드)</div><div class="photo-dl-grid">`;
     allPhotos.forEach((p,i)=>{
       const src=typeof p==='string'?p:p.src;
       const cap=typeof p==='string'?'현장사진':p.caption||'현장사진';
+      const fname=`점검사진_${site.dong}_${site.addr.replace('화성시 ','').replace(/[\\/:*?"<>|]/g,'_').substring(0,20)}_${String(i+1).padStart(2,'0')}.jpg`;
       html+=`<div class="photo-dl-item">
         <img src="${src}" onclick="viewPhoto('${src}')">
         <div class="photo-dl-caption">${cap}</div>
-        <button class="photo-dl-btn" onclick="downloadPhoto('${src}','점검사진_${site.dong}_${i+1}.jpg')">⬇️ 다운로드</button>
+        <button class="photo-dl-btn" onclick="downloadPhoto('${src}','${fname}')">⬇️ 다운로드</button>
       </div>`;
     });
     html+=`</div>`;
-  }else{
-    html+=`<div class="warn-box">📸 등록된 사진이 없습니다.</div>`;
-  }
+  }else{html+=`<div class="warn-box">📸 등록된 사진이 없습니다.</div>`;}
 
   document.getElementById('detailModalBody').innerHTML=html;
   document.getElementById('detailModal').classList.add('open');
 }
 
 function downloadPhoto(src,filename){
-  const a=document.createElement('a');
-  a.href=src;a.download=filename;a.target='_blank';
+  const a=document.createElement('a');a.href=src;a.download=filename;a.target='_blank';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   showToast(`📥 "${filename}" 다운로드 시작`);
 }
 
 /* ════════════════════════════════════════
-   15. 모달 외부 클릭 닫기
+   전체 사진 일괄 다운로드 (ZIP) - 관리자 전용
+   폴더 구조: 지역명_주소/파일명.jpg
+════════════════════════════════════════ */
+async function downloadAllPhotos(){
+  if(currentUser.org!=='본청'){
+    showToast('⚠️ 전체 다운로드는 본청(관리자)만 가능합니다.');return;
+  }
+
+  const btn=document.getElementById('dlAllBtn');
+  const progressWrap=document.getElementById('dlProgressWrap');
+  const progressText=document.getElementById('dlProgressText');
+  const progressFill=document.getElementById('dlProgressFill');
+
+  // 사진 있는 현장 필터
+  const sitesWithPhotos=SITES.filter(site=>{
+    const ins=getInspection(site.id);
+    return((ins?.photos?.length||0)+(ins?.prevPhotos?.length||0))>0;
+  });
+
+  if(sitesWithPhotos.length===0){
+    showToast('📭 다운로드할 사진이 없습니다.');return;
+  }
+
+  // UI 초기화
+  btn.disabled=true;
+  progressWrap.style.display='block';
+  progressFill.style.width='0%';
+
+  // 전체 사진 수 계산
+  let totalPhotos=0;
+  sitesWithPhotos.forEach(site=>{
+    const ins=getInspection(site.id);
+    totalPhotos+=(ins?.photos?.length||0)+(ins?.prevPhotos?.length||0);
+  });
+
+  let downloaded=0;
+  const zip=new JSZip();
+
+  try{
+    for(const site of sitesWithPhotos){
+      const ins=getInspection(site.id);
+      const allPhotos=[...(ins?.photos||[]),...(ins?.prevPhotos||[])];
+      if(!allPhotos.length)continue;
+
+      // 폴더명: 지역명_주소 (특수문자 제거, 40자 제한)
+      const folderName=`${site.dong}_${site.addr.replace('화성시 ','').replace(/[\\/:*?"<>|]/g,'_').substring(0,40)}`;
+      const folder=zip.folder(folderName);
+
+      for(let i=0;i<allPhotos.length;i++){
+        const photo=allPhotos[i];
+        const src=typeof photo==='string'?photo:photo.src;
+
+        try{
+          progressText.textContent=`다운로드 중... ${downloaded+1}/${totalPhotos}장 (${site.dong})`;
+
+          const response=await fetch(src,{mode:'cors'});
+          const blob=await response.blob();
+          const ext=blob.type.includes('png')?'png':'jpg';
+
+          // 파일명: 지역명_주소_번호.jpg
+          const fileName=`${site.dong}_${site.addr.replace('화성시 ','').replace(/[\\/:*?"<>|]/g,'_').substring(0,30)}_${String(i+1).padStart(2,'0')}.${ext}`;
+          folder.file(fileName,blob);
+
+          downloaded++;
+          const pct=Math.round((downloaded/totalPhotos)*100);
+          progressFill.style.width=pct+'%';
+          progressText.textContent=`다운로드 중... ${pct}% (${downloaded}/${totalPhotos}장)`;
+
+        }catch(fetchErr){
+          console.warn('사진 다운로드 실패:',src,fetchErr);
+          downloaded++;
+        }
+      }
+    }
+
+    // ZIP 생성
+    progressText.textContent='📦 ZIP 파일 압축 중...';
+    const now=new Date();
+    const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    const zipName=`화성시_침수방지_현장사진_${dateStr}.zip`;
+
+    const content=await zip.generateAsync(
+      {type:'blob'},
+      meta=>{
+        progressFill.style.width=meta.percent.toFixed(0)+'%';
+        progressText.textContent=`📦 ZIP 압축 중... ${meta.percent.toFixed(0)}%`;
+      }
+    );
+
+    saveAs(content,zipName);
+    progressText.textContent=`✅ 완료! ${downloaded}장의 사진이 ZIP으로 저장됩니다.`;
+    progressFill.style.width='100%';
+    showToast(`✅ ${downloaded}장의 사진이 ZIP으로 다운로드됩니다!`);
+
+  }catch(err){
+    progressText.textContent='❌ 다운로드 실패: '+err.message;
+    showToast('❌ 다운로드 실패: '+err.message);
+    console.error(err);
+  }
+
+  btn.disabled=false;
+  btn.textContent='📦 전체 사진 ZIP 다운로드';
+  setTimeout(()=>{progressWrap.style.display='none';},5000);
+}
+
+/* ════════════════════════════════════════
+   모달 외부 클릭 닫기
 ════════════════════════════════════════ */
 ['checkModal','assignModal','detailModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){
