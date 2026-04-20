@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>화성시 침수방지시설·차수판 현장점검 시스템</title>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<!-- JSZip + FileSaver (전체 사진 ZIP 다운로드) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -17,12 +15,7 @@
 body{font-family:'Apple SD Gothic Neo','맑은 고딕',sans-serif;background:#f0f4f8;}
 
 /* ── 헤더 ── */
-header{
-  background:linear-gradient(135deg,#1a56db,#0e3a8a);
-  color:#fff;padding:12px 20px;
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);
-}
+header{background:linear-gradient(135deg,#1a56db,#0e3a8a);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 header h1{font-size:.95rem;font-weight:bold;}
 .badge{background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px;font-size:.72rem;margin-left:6px;}
 .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:.78rem;}
@@ -75,11 +68,12 @@ header h1{font-size:.95rem;font-weight:bold;}
 
 /* ── 현장 카드 ── */
 .site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
-.site-card{background:#f7fafc;border:2px solid #e2e8f0;border-radius:10px;padding:13px;cursor:pointer;transition:all .2s;}
+.site-card{background:#f7fafc;border:2px solid #e2e8f0;border-radius:10px;padding:13px;transition:all .2s;position:relative;}
 .site-card:hover{border-color:#1a56db;background:#ebf4ff;}
 .site-card.completed{border-color:#9ae6b4;background:#f0fff4;}
 .site-card.in-progress{border-color:#fbd38d;background:#fffff0;}
 .site-card.has-issue{border-color:#feb2b2;background:#fff5f5;}
+.site-card-body{cursor:pointer;}
 .site-name{font-weight:bold;font-size:.82rem;color:#2d3748;margin-bottom:5px;}
 .site-addr{font-size:.74rem;color:#718096;margin-top:4px;line-height:1.4;}
 .dual-badge{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
@@ -95,12 +89,15 @@ header h1{font-size:.95rem;font-weight:bold;}
 .progress-bar-wrap{background:#e2e8f0;border-radius:4px;height:5px;margin-top:7px;}
 .progress-bar{height:100%;background:#1a56db;border-radius:4px;transition:width .3s;}
 
+/* ── 현장 카드 삭제 버튼 ── */
+.site-card-footer{display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid #e2e8f0;}
+.btn-card-check{flex:1;padding:7px;background:#1a56db;color:#fff;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;font-weight:bold;}
+.btn-card-check:hover{background:#1e40af;}
+.btn-card-del{padding:7px 10px;background:#fff5f5;color:#991b1b;border:1px solid #feb2b2;border-radius:6px;font-size:.74rem;cursor:pointer;font-weight:bold;}
+.btn-card-del:hover{background:#fee2e2;}
+
 /* ── 사진 업로드 ── */
-.photo-upload-label{
-  display:block;width:100%;padding:16px;margin-top:4px;
-  background:#f3f4f6;border:2px dashed #9ca3af;border-radius:8px;
-  font-size:.9rem;cursor:pointer;color:#374151;text-align:center;transition:all .2s;
-}
+.photo-upload-label{display:block;width:100%;padding:16px;margin-top:4px;background:#f3f4f6;border:2px dashed #9ca3af;border-radius:8px;font-size:.9rem;cursor:pointer;color:#374151;text-align:center;transition:all .2s;}
 .photo-upload-label:hover{background:#e5e7eb;border-color:#1a56db;}
 .photo-upload-label input[type=file]{display:none;}
 .upload-progress{margin-top:8px;font-size:.8rem;color:#1a56db;font-weight:bold;min-height:20px;text-align:center;}
@@ -119,6 +116,8 @@ header h1{font-size:.95rem;font-weight:bold;}
 .btn-success:hover{background:#38a169;}
 .btn-warning{background:#f6ad55;color:#fff;}
 .btn-warning:hover{background:#ed8936;}
+.btn-danger{background:#e53e3e;color:#fff;}
+.btn-danger:hover{background:#c53030;}
 .btn-secondary{background:#e2e8f0;color:#4a5568;}
 .btn-secondary:hover{background:#cbd5e0;}
 .btn-sm{padding:5px 11px;font-size:.76rem;}
@@ -160,6 +159,7 @@ header h1{font-size:.95rem;font-weight:bold;}
 /* ── 정보 박스 ── */
 .info-box{background:#ebf8ff;border-left:4px solid #1a56db;padding:9px 13px;border-radius:0 8px 8px 0;font-size:.8rem;color:#2b6cb0;margin-bottom:12px;}
 .warn-box{background:#fffbeb;border-left:4px solid #f6ad55;padding:9px 13px;border-radius:0 8px 8px 0;font-size:.8rem;color:#92400e;margin-bottom:12px;}
+.danger-box{background:#fff5f5;border-left:4px solid #e53e3e;padding:9px 13px;border-radius:0 8px 8px 0;font-size:.8rem;color:#c53030;margin-bottom:12px;}
 
 /* ── 실시간 뱃지 ── */
 .live-badge{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:bold;}
@@ -375,25 +375,38 @@ header h1{font-size:.95rem;font-weight:bold;}
     <div style="overflow-x:auto;" id="reportDetail"></div>
   </div>
 
-  <!-- 전체 사진 다운로드 (본청 관리자 전용) -->
-  <div class="card" id="dlSection" style="display:none;">
-    <div class="card-title">📦 전체 현장 사진 일괄 다운로드
-      <span style="font-size:.74rem;color:#718096;font-weight:normal;">(본청 관리자 전용)</span>
-    </div>
-    <div class="info-box">
-      📁 모든 현장 사진을 <strong>주소명 폴더</strong>로 분류하여 ZIP 파일로 다운로드합니다.<br>
-      파일명 형식: <code>지역명_주소_번호.jpg</code>
-    </div>
-    <div class="dl-progress-wrap" id="dlProgressWrap">
-      <div class="dl-progress-text" id="dlProgressText">준비 중...</div>
-      <div class="dl-progress-bar-bg">
-        <div class="dl-progress-bar-fill" id="dlProgressFill"></div>
+  <!-- 관리자 전용 섹션 -->
+  <div class="card" id="adminSection" style="display:none;">
+    <div class="card-title">⚙️ 관리자 기능 (본청 전용)</div>
+
+    <!-- 전체 사진 다운로드 -->
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:bold;font-size:.9rem;margin-bottom:8px;">📦 전체 사진 일괄 다운로드</div>
+      <div class="info-box">모든 현장 사진을 주소명 폴더로 분류하여 ZIP 파일로 다운로드합니다.</div>
+      <div class="dl-progress-wrap" id="dlProgressWrap">
+        <div class="dl-progress-text" id="dlProgressText">준비 중...</div>
+        <div class="dl-progress-bar-bg"><div class="dl-progress-bar-fill" id="dlProgressFill"></div></div>
       </div>
+      <button class="btn btn-warning" id="dlAllBtn" onclick="downloadAllPhotos()"
+        style="width:100%;padding:12px;font-size:.95rem;margin-top:8px;">
+        📦 전체 사진 ZIP 다운로드
+      </button>
     </div>
-    <button class="btn btn-warning" id="dlAllBtn" onclick="downloadAllPhotos()"
-      style="width:100%;padding:14px;font-size:1rem;margin-top:8px;">
-      📦 전체 사진 ZIP 다운로드
-    </button>
+
+    <!-- 구분선 -->
+    <hr style="border:none;border-top:2px solid #e2e8f0;margin:16px 0;">
+
+    <!-- 전체 삭제 -->
+    <div>
+      <div style="font-weight:bold;font-size:.9rem;margin-bottom:8px;color:#c53030;">🗑️ 전체 점검 데이터 삭제</div>
+      <div class="danger-box">
+        ⚠️ <strong>주의:</strong> 모든 현장의 점검 결과, 사진 URL, 담당자 배정 정보가 영구 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+      </div>
+      <button class="btn btn-danger" id="deleteAllBtn" onclick="deleteAllInspections()"
+        style="width:100%;padding:12px;font-size:.95rem;margin-top:8px;">
+        🗑️ 전체 점검 데이터 일괄 삭제
+      </button>
+    </div>
   </div>
 
   <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px;">
@@ -416,27 +429,21 @@ header h1{font-size:.95rem;font-weight:bold;}
         <li>[점검 완료 저장] 클릭 → 모든 사용자에게 즉시 공유!</li>
         <li>[결과 보고서] 탭 → 행 클릭 → 세부 팝업 확인 및 사진 다운로드</li>
       </ol>
+      <p><strong>🗑️ 삭제 기능</strong></p>
+      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
+        <li><strong>개별 삭제:</strong> 현장 카드 하단 [🗑️ 점검 삭제] 버튼 클릭</li>
+        <li><strong>전체 삭제:</strong> [결과 보고서] 탭 → 관리자 섹션 → [전체 점검 데이터 일괄 삭제] (본청 전용)</li>
+        <li>삭제 후에는 복구가 불가능하니 신중히 사용하세요</li>
+      </ul>
       <p><strong>🟢 실시간 공유</strong></p>
       <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
         <li>저장 즉시 모든 사용자 화면에 <strong>실시간 반영</strong></li>
-        <li>사진 → Cloudinary 저장 / 데이터 → Firebase Firestore 저장</li>
         <li>새로고침 없이 자동 업데이트</li>
-      </ul>
-      <p><strong>📦 전체 사진 일괄 다운로드 (본청 관리자)</strong></p>
-      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
-        <li>[결과 보고서] 탭 하단 → [전체 사진 ZIP 다운로드] 버튼</li>
-        <li>주소명 폴더로 자동 분류된 ZIP 파일로 다운로드</li>
-      </ul>
-      <p><strong>🟣 중복설치 현장</strong></p>
-      <ul style="margin-left:18px;margin-top:6px;margin-bottom:14px;">
-        <li>침수방지시설+차수판 모두 설치된 현장은 🔄 중복 태그 표시</li>
-        <li>점검표에 두 시설 항목이 통합되어 한 번에 점검 가능</li>
       </ul>
       <p><strong>🔴 주의사항</strong></p>
       <ul style="margin-left:18px;margin-top:6px;">
         <li>부적합 항목 발견 시 메모란에 사유 필수 기재</li>
         <li>사진은 시설 전체가 보이도록 촬영</li>
-        <li>비 오는 날 스마트폰 방수 처리 후 사용</li>
         <li>기관 내부망에서 사진 업로드 안 될 경우 스마트폰 핫스팟 사용</li>
       </ul>
     </div>
@@ -484,6 +491,7 @@ header h1{font-size:.95rem;font-weight:bold;}
     </div>
     <div class="modal-body" id="detailModalBody"></div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="detailDelBtn" onclick="deleteFromDetail()">🗑️ 이 현장 점검 삭제</button>
       <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('open')">닫기</button>
     </div>
   </div>
@@ -493,7 +501,7 @@ header h1{font-size:.95rem;font-weight:bold;}
 
 <script>
 /* ════════════════════════════════════════
-   ✅ Firebase 설정
+   Firebase + Cloudinary 설정
 ════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey:            "AIzaSyCQZwxnOGVPLQr1NIjUTUM79Q27UsHN_-E",
@@ -503,10 +511,8 @@ const firebaseConfig = {
   messagingSenderId: "547444028415",
   appId:             "1:547444028415:web:55df27d964245e8e086dca"
 };
-
-/* ✅ Cloudinary 설정 (위젯 없이 REST API 직접 방식) */
-const CLOUD_NAME    = "dwmj1xgpg";
-const UPLOAD_PRESET = "hwaseong_preset";
+const CLOUD_NAME     = "dwmj1xgpg";
+const UPLOAD_PRESET  = "hwaseong_preset";
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 firebase.initializeApp(firebaseConfig);
@@ -670,6 +676,7 @@ let currentDong=null;
 let currentTypeFilter='all';
 let inspectionsData={};
 let assignmentsData={};
+let detailCurrentSiteId=null; // 세부 팝업에서 삭제용
 
 /* ════════════════════════════════════════
    Firebase 실시간 리스너
@@ -702,16 +709,13 @@ function refreshAllViews(){
 }
 
 /* ════════════════════════════════════════
-   헬퍼 함수
+   헬퍼
 ════════════════════════════════════════ */
 function getAssignment(siteId){return assignmentsData[siteId]||{assignee:'',org:'',dept:'',team:''};}
 function getInspection(siteId){return inspectionsData[siteId]||null;}
 function getSiteStatus(siteId){
   const ins=getInspection(siteId);
-  if(!ins||!ins.completed){
-    if(ins&&Object.keys(ins.checks||{}).length>0) return 'progress';
-    return 'waiting';
-  }
+  if(!ins||!ins.completed){if(ins&&Object.keys(ins.checks||{}).length>0)return'progress';return'waiting';}
   return Object.values(ins.checks||{}).some(v=>v==='ng')?'issue':'done';
 }
 function getTotalChecks(site){
@@ -720,14 +724,12 @@ function getTotalChecks(site){
         (site.type==='both'?(ALARM_CHECKS.length+WATER_CHECKS.length):0);
 }
 function getProgressPct(site){
-  const ins=getInspection(site.id);
-  if(!ins) return 0;
+  const ins=getInspection(site.id);if(!ins)return 0;
   const total=getTotalChecks(site);
   return total?Math.round(Object.keys(ins.checks||{}).length/total*100):0;
 }
-function safeName(str){
-  return str.replace('화성시 ','').replace(/[\\/:*?"<>|]/g,'_').substring(0,35);
-}
+function safeName(str){return str.replace('화성시 ','').replace(/[\\/:*?"<>|]/g,'_').substring(0,35);}
+function isAdmin(){return currentUser.org==='본청';}
 
 /* ════════════════════════════════════════
    로그인
@@ -741,7 +743,7 @@ function doLogin(){
   currentUser={name,org,dept,team};
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('currentUserDisplay').textContent=[org,dept,team,name].filter(Boolean).join(' ');
-  if(org==='본청') document.getElementById('dlSection').style.display='block';
+  if(isAdmin()) document.getElementById('adminSection').style.display='block';
   startRealtimeListeners();
   startClock();
 }
@@ -750,11 +752,7 @@ function doLogin(){
    유틸
 ════════════════════════════════════════ */
 function startClock(){
-  const tick=()=>{
-    const n=new Date();
-    document.getElementById('liveTime').textContent=
-      n.toLocaleDateString('ko-KR')+' '+n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  };
+  const tick=()=>{const n=new Date();document.getElementById('liveTime').textContent=n.toLocaleDateString('ko-KR')+' '+n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});};
   tick();setInterval(tick,1000);
 }
 function showTab(id,btn){
@@ -762,12 +760,11 @@ function showTab(id,btn){
   document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn)btn.classList.add('active');
-  if(id==='tab-report') renderReport();
-  if(id==='tab-assign') renderAssignTable();
+  if(id==='tab-report')renderReport();
+  if(id==='tab-assign')renderAssignTable();
 }
 function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3500);
 }
 
@@ -792,10 +789,10 @@ function renderDongGrid(){
     const hasMe=ds.some(s=>getAssignment(s.id).assignee===currentUser.name);
     const cardCls=issue>0?'has-issue':(done+issue===total&&total>0?'all-done':'');
     let badges='';
-    if(done>0) badges+=`<span class="dong-mini-badge dmb-done">✅${done}</span>`;
+    if(done>0)badges+=`<span class="dong-mini-badge dmb-done">✅${done}</span>`;
     if(issue>0)badges+=`<span class="dong-mini-badge dmb-issue">⚠️${issue}</span>`;
-    if(prog>0) badges+=`<span class="dong-mini-badge dmb-prog">🔄${prog}</span>`;
-    if(wait>0) badges+=`<span class="dong-mini-badge dmb-wait">⏳${wait}</span>`;
+    if(prog>0)badges+=`<span class="dong-mini-badge dmb-prog">🔄${prog}</span>`;
+    if(wait>0)badges+=`<span class="dong-mini-badge dmb-wait">⏳${wait}</span>`;
     return`<div class="dong-card ${cardCls}" onclick="selectDong('${dong}')">
       ${hasMe?'<div class="my-badge">내 담당</div>':''}
       <div class="dong-icon">${DONG_ICON[dong]||'📍'}</div>
@@ -831,8 +828,7 @@ function goBackToDong(){
 function setTypeFilter(type,btn){
   currentTypeFilter=type;
   document.querySelectorAll('.type-filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderSiteGrid();
+  btn.classList.add('active');renderSiteGrid();
 }
 function renderSiteGrid(){
   if(!currentDong)return;
@@ -865,41 +861,48 @@ function renderSiteGrid(){
     const stInfo=stMap[st];
     const ins=getInspection(site.id);
     const checkedCount=Object.keys(ins?.checks||{}).length;
-    return`<div class="site-card ${cardCls}" onclick="openCheckModal(${site.id})">
-      <div class="site-name">📍 ${site.addr.replace('화성시 ','')}</div>
-      <div class="dual-badge">${typeTag[site.type]}</div>
-      <div class="site-addr">
-        👤 담당: <strong>${asgn.assignee||'미배정'}</strong>
-        ${asgn.org?`<span style="color:#718096">(${asgn.org} ${asgn.team})</span>`:''}
-        ${isMe?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.66rem;margin-left:4px;">내 담당</span>':''}
+    const hasData=!!ins;
+
+    // 삭제 권한: 본청 관리자 또는 본인 담당자
+    const canDelete=isAdmin()||(asgn.assignee===currentUser.name);
+
+    return`<div class="site-card ${cardCls}">
+      <div class="site-card-body" onclick="openCheckModal(${site.id})">
+        <div class="site-name">📍 ${site.addr.replace('화성시 ','')}</div>
+        <div class="dual-badge">${typeTag[site.type]}</div>
+        <div class="site-addr">
+          👤 담당: <strong>${asgn.assignee||'미배정'}</strong>
+          ${asgn.org?`<span style="color:#718096">(${asgn.org} ${asgn.team})</span>`:''}
+          ${isMe?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:.66rem;margin-left:4px;">내 담당</span>':''}
+        </div>
+        <div style="margin-top:6px;"><span class="site-status ${stInfo.cls}">${stInfo.label}</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <div style="font-size:.72rem;color:#718096;margin-top:3px;">진행률: ${pct}% (${checkedCount}/${getTotalChecks(site)})</div>
       </div>
-      <div style="margin-top:6px;"><span class="site-status ${stInfo.cls}">${stInfo.label}</span></div>
-      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
-      <div style="font-size:.72rem;color:#718096;margin-top:3px;">진행률: ${pct}% (${checkedCount}/${getTotalChecks(site)})</div>
+      ${hasData&&canDelete?`
+      <div class="site-card-footer">
+        <button class="btn-card-check" onclick="openCheckModal(${site.id})">📋 점검표 열기</button>
+        <button class="btn-card-del" onclick="deleteSingleInspection(${site.id},'${site.dong}')">🗑️ 점검 삭제</button>
+      </div>`:''}
     </div>`;
   }).join('');
   document.getElementById('siteListCount').textContent=`전체 ${sites.length}개소 | 내 담당 ${myCount}개소`;
 }
 
 /* ════════════════════════════════════════
-   ✅ 사진 업로드 (Cloudinary REST API 직접 방식)
-   위젯 없이 input file → fetch로 직접 전송
+   ✅ 사진 업로드 (Cloudinary REST API)
 ════════════════════════════════════════ */
 async function uploadPhotoFile(file){
-  if(!file||!file.type.startsWith('image/')){
-    showToast('❌ 이미지 파일만 업로드 가능합니다.');return null;
-  }
-  if(file.size>10*1024*1024){
-    showToast('❌ 파일 크기는 10MB 이하만 가능합니다.');return null;
-  }
+  if(!file||!file.type.startsWith('image/')){showToast('❌ 이미지 파일만 업로드 가능합니다.');return null;}
+  if(file.size>10*1024*1024){showToast('❌ 파일 크기는 10MB 이하만 가능합니다.');return null;}
   const formData=new FormData();
   formData.append('file',file);
   formData.append('upload_preset',UPLOAD_PRESET);
   try{
     const res=await fetch(CLOUDINARY_URL,{method:'POST',body:formData});
-    if(!res.ok) throw new Error('HTTP '+res.status);
+    if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
-    if(data.error) throw new Error(data.error.message);
+    if(data.error)throw new Error(data.error.message);
     return data.secure_url;
   }catch(err){
     console.error('Cloudinary 업로드 오류:',err);
@@ -907,28 +910,23 @@ async function uploadPhotoFile(file){
     return null;
   }
 }
-
 async function handlePhotoInput(input){
-  const files=Array.from(input.files);
-  if(!files.length)return;
+  const files=Array.from(input.files);if(!files.length)return;
   const progressEl=document.getElementById('photoUploadProgress');
-  const grid=document.getElementById('photoGrid');
-  if(!grid)return;
-
+  const grid=document.getElementById('photoGrid');if(!grid)return;
   for(let i=0;i<files.length;i++){
-    if(progressEl) progressEl.textContent=`⏳ 업로드 중... ${i+1}/${files.length}장`;
+    if(progressEl)progressEl.textContent=`⏳ 업로드 중... ${i+1}/${files.length}장`;
     const url=await uploadPhotoFile(files[i]);
     if(url){
       const caption=`${currentUser.name} | ${new Date().toLocaleTimeString('ko-KR')}`;
       uploadedPhotos.push({src:url,caption});
-      const div=document.createElement('div');
-      div.className='photo-item';
+      const div=document.createElement('div');div.className='photo-item';
       div.innerHTML=`<img src="${url}" onclick="viewPhoto('${url}')"><div class="photo-caption">${caption}</div>`;
       grid.appendChild(div);
       showToast(`📸 ${i+1}/${files.length}장 업로드 완료!`);
     }
   }
-  if(progressEl) progressEl.textContent=`✅ ${files.length}장 업로드 완료!`;
+  if(progressEl)progressEl.textContent=`✅ ${files.length}장 업로드 완료!`;
   input.value='';
 }
 
@@ -936,10 +934,8 @@ async function handlePhotoInput(input){
    점검표 모달
 ════════════════════════════════════════ */
 function openCheckModal(siteId){
-  const site=SITES.find(s=>s.id===siteId);
-  if(!site)return;
+  const site=SITES.find(s=>s.id===siteId);if(!site)return;
   currentSiteId=siteId;uploadedPhotos=[];
-
   const ins=getInspection(siteId)||{};
   const asgn=getAssignment(siteId);
   const savedChecks=ins.checks||{},savedMemos=ins.memos||{};
@@ -965,16 +961,13 @@ function openCheckModal(siteId){
     html+=renderCheckItems(WATER_CHECKS,savedChecks,savedMemos);
   }
 
-  /* ✅ 사진 업로드 - input 직접 방식 */
   html+=`<div class="section-divider">📸 현장 사진 업로드</div>
-  <label class="photo-upload-label">
-    <input type="file" accept="image/*" multiple capture="environment"
-      onchange="handlePhotoInput(this)">
+  <label style="display:block;width:100%;padding:16px;margin-top:4px;background:#f3f4f6;border:2px dashed #9ca3af;border-radius:8px;font-size:.9rem;cursor:pointer;color:#374151;text-align:center;">
+    <input type="file" accept="image/*" multiple capture="environment" onchange="handlePhotoInput(this)" style="display:none;">
     📷 사진 선택 / 카메라 촬영 (여러 장 동시 선택 가능)
   </label>
   <div class="upload-progress" id="photoUploadProgress"></div>
   <div class="photo-grid" id="photoGrid">`;
-
   savedPhotos.forEach(p=>{
     const src=typeof p==='string'?p:p.src;
     const cap=typeof p==='string'?'현장사진':p.caption||'현장사진';
@@ -993,9 +986,7 @@ function openCheckModal(siteId){
   }
 
   html+=`<div class="section-divider">📝 종합 의견</div>
-  <textarea id="overallNote"
-    style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;font-size:.84rem;font-family:inherit;"
-    placeholder="전체 점검 후 종합 의견을 입력하세요.">${ins.note||''}</textarea>`;
+  <textarea id="overallNote" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;font-size:.84rem;font-family:inherit;" placeholder="전체 점검 후 종합 의견을 입력하세요.">${ins.note||''}</textarea>`;
 
   document.getElementById('modalBody').innerHTML=html;
   document.getElementById('checkModal').classList.add('open');
@@ -1014,8 +1005,7 @@ function renderCheckItems(items,savedChecks,savedMemos){
           <button class="btn-check ng ${val==='ng'?'selected':''}" onclick="selectCheck('${item.id}','ng',this)">❌ 부적합</button>
           <button class="btn-check na ${val==='na'?'selected':''}" onclick="selectCheck('${item.id}','na',this)">➖ 해당없음</button>
         </div>
-        <textarea class="check-memo" id="memo_${item.id}"
-          placeholder="특이사항 메모 (부적합 시 사유 필수)">${savedMemos[item.id]||''}</textarea>
+        <textarea class="check-memo" id="memo_${item.id}" placeholder="특이사항 메모 (부적합 시 사유 필수)">${savedMemos[item.id]||''}</textarea>
       </div>
     </div>`;
   }).join('');
@@ -1032,7 +1022,7 @@ function selectCheck(itemId,val,btn){
 function viewPhoto(src){window.open(src,'_blank');}
 
 /* ════════════════════════════════════════
-   점검 저장 → Firebase Firestore
+   점검 저장
 ════════════════════════════════════════ */
 async function saveInspection(){
   if(!currentSiteId)return;
@@ -1040,51 +1030,105 @@ async function saveInspection(){
   const saveBtn=document.getElementById('saveBtn');
   saveBtn.disabled=true;saveBtn.textContent='💾 저장 중...';
 
-  // 체크 수집
   const checks={};
   document.querySelectorAll('.btn-check.selected').forEach(btn=>{
     const match=btn.getAttribute('onclick').match(/'([^']+)'/);
-    if(match){
-      const itemId=match[1];
-      const val=btn.classList.contains('ok')?'ok':btn.classList.contains('ng')?'ng':'na';
-      checks[itemId]=val;
-    }
+    if(match){const itemId=match[1];const val=btn.classList.contains('ok')?'ok':btn.classList.contains('ng')?'ng':'na';checks[itemId]=val;}
   });
-
-  // 메모 수집
   const memos={};
   [...ALARM_CHECKS,...WATER_CHECKS].forEach(item=>{
     const el=document.getElementById(`memo_${item.id}`);
     if(el&&el.value.trim())memos[item.id]=el.value.trim();
   });
-
   const note=document.getElementById('overallNote')?.value||'';
   const prevIns=getInspection(currentSiteId)||{};
   let prevPhotos=prevIns.prevPhotos||[];
-  if(prevIns.photos?.length) prevPhotos=[...prevPhotos,...prevIns.photos].slice(-8);
-  const currentPhotos=uploadedPhotos.length>0
-    ?uploadedPhotos.map(p=>({src:p.src,caption:p.caption}))
-    :(prevIns.photos||[]);
+  if(prevIns.photos?.length)prevPhotos=[...prevPhotos,...prevIns.photos].slice(-8);
+  const currentPhotos=uploadedPhotos.length>0?uploadedPhotos.map(p=>({src:p.src,caption:p.caption})):(prevIns.photos||[]);
 
   try{
     await db.collection('inspections').doc(String(currentSiteId)).set({
       siteId:currentSiteId,dong:site.dong,addr:site.addr,type:site.type,
-      checks,memos,note,
-      photos:currentPhotos,
-      prevPhotos,
-      inspector:currentUser.name,
-      org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
-      time:new Date().toLocaleString('ko-KR'),
-      completed:true,
+      checks,memos,note,photos:currentPhotos,prevPhotos,
+      inspector:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
+      time:new Date().toLocaleString('ko-KR'),completed:true,
       savedAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast(`✅ "${site.dong}" 점검 결과가 모든 사용자에게 공유되었습니다!`);
     closeModal();
-  }catch(err){
-    showToast('❌ 저장 실패: '+err.message);
-    console.error(err);
-  }
+  }catch(err){showToast('❌ 저장 실패: '+err.message);console.error(err);}
   saveBtn.disabled=false;saveBtn.textContent='💾 점검 완료 저장';
+}
+
+/* ════════════════════════════════════════
+   🗑️ 삭제 기능
+════════════════════════════════════════ */
+
+/* 개별 현장 점검 삭제 (현장 카드에서) */
+async function deleteSingleInspection(siteId, dongName){
+  const site=SITES.find(s=>s.id===siteId);
+  const addrShort=site?site.addr.replace('화성시 ',''):siteId;
+  if(!confirm(`⚠️ 아래 현장의 점검 데이터를 삭제하시겠습니까?
+
+📍 ${dongName} - ${addrShort}
+
+점검 결과, 사진 정보가 모두 삭제됩니다.
+이 작업은 되돌릴 수 없습니다.`))return;
+  try{
+    await db.collection('inspections').doc(String(siteId)).delete();
+    showToast(`🗑️ "${dongName}" 현장 점검 데이터가 삭제되었습니다.`);
+  }catch(err){showToast('❌ 삭제 실패: '+err.message);console.error(err);}
+}
+
+/* 세부 팝업에서 삭제 */
+async function deleteFromDetail(){
+  if(!detailCurrentSiteId)return;
+  const site=SITES.find(s=>s.id===detailCurrentSiteId);
+  const dongName=site?.dong||'';
+  const addrShort=site?.addr.replace('화성시 ','')||'';
+  if(!confirm(`⚠️ 아래 현장의 점검 데이터를 삭제하시겠습니까?
+
+📍 ${dongName} - ${addrShort}
+
+점검 결과, 사진 정보가 모두 삭제됩니다.
+이 작업은 되돌릴 수 없습니다.`))return;
+  try{
+    await db.collection('inspections').doc(String(detailCurrentSiteId)).delete();
+    document.getElementById('detailModal').classList.remove('open');
+    showToast(`🗑️ "${dongName}" 현장 점검 데이터가 삭제되었습니다.`);
+    detailCurrentSiteId=null;
+  }catch(err){showToast('❌ 삭제 실패: '+err.message);console.error(err);}
+}
+
+/* 전체 점검 데이터 일괄 삭제 (본청 관리자 전용) */
+async function deleteAllInspections(){
+  if(!isAdmin()){showToast('⚠️ 전체 삭제는 본청 관리자만 가능합니다.');return;}
+
+  // 1차 확인
+  if(!confirm('⚠️ 경고!
+
+모든 현장의 점검 결과 데이터를 삭제하시겠습니까?
+
+이 작업은 절대 되돌릴 수 없습니다!'))return;
+
+  // 2차 확인 (이중 방어)
+  const input=prompt('정말로 전체 삭제하시려면 아래 입력창에
+"전체삭제확인" 을 입력하세요:');
+  if(input!=='전체삭제확인'){showToast('❌ 입력이 일치하지 않아 삭제가 취소되었습니다.');return;}
+
+  const btn=document.getElementById('deleteAllBtn');
+  btn.disabled=true;btn.textContent='🗑️ 삭제 중...';
+
+  try{
+    const snapshot=await db.collection('inspections').get();
+    const batch=db.batch();
+    snapshot.docs.forEach(doc=>batch.delete(doc.ref));
+    await batch.commit();
+    showToast(`✅ 전체 ${snapshot.size}건의 점검 데이터가 삭제되었습니다.`);
+  }catch(err){
+    showToast('❌ 삭제 실패: '+err.message);console.error(err);
+  }
+  btn.disabled=false;btn.textContent='🗑️ 전체 점검 데이터 일괄 삭제';
 }
 
 /* ════════════════════════════════════════
@@ -1098,7 +1142,7 @@ function renderAssignTable(){
     issue:'<span class="site-status s-issue">⚠️ 부적합</span>'
   };
   const typeLabel={alarm:'🔔 침수방지시설',water:'🛡️ 차수판',both:'🔔+🛡️ 중복'};
-  const isAdmin=currentUser.org==='본청';
+  const admin=isAdmin();
   document.getElementById('assignTableBody').innerHTML=SITES.map((site,idx)=>{
     const st=getSiteStatus(site.id);
     const asgn=getAssignment(site.id);
@@ -1110,10 +1154,16 @@ function renderAssignTable(){
       <td data-label="담당자"><strong>${asgn.assignee||'<span style="color:#a0aec0">미배정</span>'}</strong></td>
       <td data-label="소속" style="font-size:.76rem;">${asgn.org||'-'} ${asgn.team||''}</td>
       <td data-label="상태">${stMap[st]}</td>
-      <td>${isAdmin
-        ?`<button class="btn btn-sm btn-secondary" onclick="openAssignModal(${site.id})">✏️ 변경</button>`
-        :`<button class="btn btn-sm btn-primary" onclick="selfAssign(${site.id})">🙋 내가 맡기</button>`
-      }</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${admin
+          ?`<button class="btn btn-sm btn-secondary" onclick="openAssignModal(${site.id})">✏️ 변경</button>`
+          :`<button class="btn btn-sm btn-primary" onclick="selfAssign(${site.id})">🙋 내가 맡기</button>`
+        }
+        ${(admin||(asgn.assignee===currentUser.name))&&getInspection(site.id)
+          ?`<button class="btn btn-sm btn-danger" onclick="deleteSingleInspection(${site.id},'${site.dong}')">🗑️</button>`
+          :''
+        }
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1142,10 +1192,7 @@ function updateAsgFields(preOrg,preDept,preTeam){
   ds.innerHTML='<option value="">과 선택</option>'+ORG[org].depts.map(d=>`<option ${d===preDept?'selected':''}>${d}</option>`).join('');
   const dept=preDept||ds.value;
   ts.innerHTML='<option value="">팀 선택</option>'+(ORG[org].teams[dept]||[]).map(t=>`<option ${t===preTeam?'selected':''}>${t}</option>`).join('');
-  ds.onchange=()=>{
-    const d=ds.value;
-    ts.innerHTML='<option value="">팀 선택</option>'+(ORG[org].teams[d]||[]).map(t=>`<option>${t}</option>`).join('');
-  };
+  ds.onchange=()=>{const d=ds.value;ts.innerHTML='<option value="">팀 선택</option>'+(ORG[org].teams[d]||[]).map(t=>`<option>${t}</option>`).join('');};
 }
 async function saveAssign(){
   const name=document.getElementById('asgName').value.trim();
@@ -1167,8 +1214,7 @@ async function selfAssign(siteId){
     if(!confirm(`이미 "${asgn.assignee}"님이 담당 중입니다. 변경하시겠습니까?`))return;
   try{
     await db.collection('assignments').doc(String(siteId)).set({
-      siteId,assignee:currentUser.name,org:currentUser.org,
-      dept:currentUser.dept,team:currentUser.team,
+      siteId,assignee:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     showToast('✅ 담당으로 등록되었습니다.');
@@ -1183,10 +1229,7 @@ function renderReport(){
   let total=SITES.length,done=0,issue=0,prog=0,wait=0,both=0;
   SITES.forEach(s=>{
     const st=getSiteStatus(s.id);
-    if(st==='done')done++;
-    else if(st==='issue'){done++;issue++;}
-    else if(st==='progress')prog++;
-    else wait++;
+    if(st==='done')done++;else if(st==='issue'){done++;issue++;}else if(st==='progress')prog++;else wait++;
     if(s.type==='both')both++;
   });
   document.getElementById('reportSummary').innerHTML=`
@@ -1246,6 +1289,15 @@ function openDetailModal(siteId){
   const site=SITES.find(s=>s.id===siteId);
   const ins=getInspection(siteId);
   if(!ins||!ins.completed){showToast('아직 점검이 완료되지 않은 현장입니다.');return;}
+
+  detailCurrentSiteId=siteId; // 삭제용 저장
+
+  // 삭제 버튼 표시 여부
+  const asgn=getAssignment(siteId);
+  const canDelete=isAdmin()||(asgn.assignee===currentUser.name);
+  const delBtn=document.getElementById('detailDelBtn');
+  delBtn.style.display=canDelete?'inline-flex':'none';
+
   const checks=ins.checks||{},memos=ins.memos||{};
   const typeLabel={alarm:'침수방지시설',water:'차수판',both:'침수방지시설+차수판'};
   const valLabel={ok:'✅ 적합',ng:'❌ 부적합',na:'➖ 해당없음','':'⬜ 미점검'};
@@ -1262,11 +1314,7 @@ function openDetailModal(siteId){
     html+=`<div class="section-divider">🔔 침수방지시설 점검 결과</div><div class="detail-check-grid">`;
     ALARM_CHECKS.forEach(item=>{
       const v=checks[item.id]||'';const memo=memos[item.id]||'';
-      html+=`<div class="detail-check-item ${v}">
-        <div class="ci-label">${item.label}</div>
-        <div>${valLabel[v]}</div>
-        ${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}
-      </div>`;
+      html+=`<div class="detail-check-item ${v}"><div class="ci-label">${item.label}</div><div>${valLabel[v]}</div>${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}</div>`;
     });
     html+=`</div>`;
   }
@@ -1274,11 +1322,7 @@ function openDetailModal(siteId){
     html+=`<div class="section-divider">🛡️ 차수판 점검 결과</div><div class="detail-check-grid">`;
     WATER_CHECKS.forEach(item=>{
       const v=checks[item.id]||'';const memo=memos[item.id]||'';
-      html+=`<div class="detail-check-item ${v}">
-        <div class="ci-label">${item.label}</div>
-        <div>${valLabel[v]}</div>
-        ${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}
-      </div>`;
+      html+=`<div class="detail-check-item ${v}"><div class="ci-label">${item.label}</div><div>${valLabel[v]}</div>${memo?`<div class="ci-memo">📝 ${memo}</div>`:''}</div>`;
     });
     html+=`</div>`;
   }
@@ -1307,20 +1351,16 @@ function openDetailModal(siteId){
 }
 
 function downloadPhoto(src,filename){
-  const a=document.createElement('a');
-  a.href=src;a.download=filename;a.target='_blank';
+  const a=document.createElement('a');a.href=src;a.download=filename;a.target='_blank';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   showToast(`📥 "${filename}" 다운로드 시작`);
 }
 
 /* ════════════════════════════════════════
-   전체 사진 ZIP 다운로드 (본청 관리자 전용)
-   폴더 구조: 지역명_주소/파일명.jpg
+   전체 사진 ZIP 다운로드 (본청 관리자)
 ════════════════════════════════════════ */
 async function downloadAllPhotos(){
-  if(currentUser.org!=='본청'){
-    showToast('⚠️ 전체 다운로드는 본청(관리자)만 가능합니다.');return;
-  }
+  if(!isAdmin()){showToast('⚠️ 전체 다운로드는 본청 관리자만 가능합니다.');return;}
   const btn=document.getElementById('dlAllBtn');
   const progressWrap=document.getElementById('dlProgressWrap');
   const progressText=document.getElementById('dlProgressText');
@@ -1330,18 +1370,12 @@ async function downloadAllPhotos(){
     const ins=getInspection(site.id);
     return((ins?.photos?.length||0)+(ins?.prevPhotos?.length||0))>0;
   });
-
   if(!sitesWithPhotos.length){showToast('📭 다운로드할 사진이 없습니다.');return;}
 
-  btn.disabled=true;
-  progressWrap.style.display='block';
-  progressFill.style.width='0%';
+  btn.disabled=true;progressWrap.style.display='block';progressFill.style.width='0%';
 
   let totalPhotos=0;
-  sitesWithPhotos.forEach(site=>{
-    const ins=getInspection(site.id);
-    totalPhotos+=(ins?.photos?.length||0)+(ins?.prevPhotos?.length||0);
-  });
+  sitesWithPhotos.forEach(site=>{const ins=getInspection(site.id);totalPhotos+=(ins?.photos?.length||0)+(ins?.prevPhotos?.length||0);});
 
   let downloaded=0;
   const zip=new JSZip();
@@ -1351,55 +1385,35 @@ async function downloadAllPhotos(){
       const ins=getInspection(site.id);
       const allPhotos=[...(ins?.photos||[]),...(ins?.prevPhotos||[])];
       if(!allPhotos.length)continue;
-
       const folderName=`${site.dong}_${safeName(site.addr)}`;
       const folder=zip.folder(folderName);
-
       for(let i=0;i<allPhotos.length;i++){
-        const photo=allPhotos[i];
-        const src=typeof photo==='string'?photo:photo.src;
+        const photo=allPhotos[i];const src=typeof photo==='string'?photo:photo.src;
         try{
-          progressText.textContent=`⏳ 다운로드 중... ${downloaded+1}/${totalPhotos}장 (${site.dong})`;
+          progressText.textContent=`⏳ ${downloaded+1}/${totalPhotos}장 다운로드 중... (${site.dong})`;
           const response=await fetch(src,{mode:'cors'});
           const blob=await response.blob();
           const ext=blob.type.includes('png')?'png':'jpg';
           const fileName=`${site.dong}_${safeName(site.addr)}_${String(i+1).padStart(2,'0')}.${ext}`;
-          folder.file(fileName,blob);
-          downloaded++;
+          folder.file(fileName,blob);downloaded++;
           progressFill.style.width=Math.round((downloaded/totalPhotos)*100)+'%';
-        }catch(fetchErr){
-          console.warn('사진 다운로드 실패:',src,fetchErr);
-          downloaded++;
-        }
+        }catch(fetchErr){console.warn('사진 다운로드 실패:',src,fetchErr);downloaded++;}
       }
     }
-
-    progressText.textContent='📦 ZIP 파일 압축 중...';
+    progressText.textContent='📦 ZIP 압축 중...';
     const now=new Date();
     const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-    const zipName=`화성시_침수방지_현장사진_${dateStr}.zip`;
-
-    const content=await zip.generateAsync(
-      {type:'blob'},
-      meta=>{
-        progressFill.style.width=meta.percent.toFixed(0)+'%';
-        progressText.textContent=`📦 ZIP 압축 중... ${meta.percent.toFixed(0)}%`;
-      }
-    );
-
-    saveAs(content,zipName);
+    const content=await zip.generateAsync({type:'blob'},meta=>{
+      progressFill.style.width=meta.percent.toFixed(0)+'%';
+      progressText.textContent=`📦 ZIP 압축 중... ${meta.percent.toFixed(0)}%`;
+    });
+    saveAs(content,`화성시_침수방지_현장사진_${dateStr}.zip`);
     progressText.textContent=`✅ 완료! ${downloaded}장의 사진이 ZIP으로 저장됩니다.`;
     progressFill.style.width='100%';
     showToast(`✅ ${downloaded}장의 사진이 ZIP으로 다운로드됩니다!`);
+  }catch(err){progressText.textContent='❌ 다운로드 실패: '+err.message;showToast('❌ 다운로드 실패: '+err.message);}
 
-  }catch(err){
-    progressText.textContent='❌ 다운로드 실패: '+err.message;
-    showToast('❌ 다운로드 실패: '+err.message);
-    console.error(err);
-  }
-
-  btn.disabled=false;
-  btn.textContent='📦 전체 사진 ZIP 다운로드';
+  btn.disabled=false;btn.textContent='📦 전체 사진 ZIP 다운로드';
   setTimeout(()=>{progressWrap.style.display='none';},6000);
 }
 
@@ -1411,6 +1425,7 @@ async function downloadAllPhotos(){
     if(e.target===this){
       this.classList.remove('open');
       if(id==='checkModal'){currentSiteId=null;uploadedPhotos=[];}
+      if(id==='detailModal'){detailCurrentSiteId=null;}
     }
   });
 });
