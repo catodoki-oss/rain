@@ -1074,36 +1074,32 @@ function renderSiteGrid(){
 function resizeImageFile(file){
   return new Promise(function(resolve,reject){
     var MAX=1280, QUALITY=0.82;
-    var reader=new FileReader();
-    reader.onerror=function(){reject(new Error('파일 읽기 실패'));};
-    reader.onload=function(e){
-      var img=new Image();
-      img.onerror=function(){reject(new Error('이미지 디코딩 실패'));};
-      img.onload=function(){
-        var w=img.width,h=img.height;
-        /* 이미 충분히 작으면 그대로 반환 */
-        if(w<=MAX&&h<=MAX&&file.size<=1.5*1024*1024){
-          resolve(file);return;
-        }
-        if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}
-        else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
-        var canvas=document.createElement('canvas');
-        canvas.width=w;canvas.height=h;
-        var ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,0,w,h);
-        canvas.toBlob(function(blob){
-          if(!blob){reject(new Error('Canvas toBlob 실패'));return;}
-          var resized=new File([blob],file.name||'photo.jpg',{type:'image/jpeg',lastModified:Date.now()});
-          /* canvas 메모리 즉시 해제 */
-          canvas.width=0;canvas.height=0;
-          resolve(resized);
-        },'image/jpeg',QUALITY);
-        /* img 레퍼런스 해제 */
-        img.src='';
-      };
-      img.src=e.target.result;
+    var objectUrl=URL.createObjectURL(file);
+    var img=new Image();
+    img.onerror=function(){
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('이미지 로드 실패'));
     };
-    reader.readAsDataURL(file);
+    img.onload=function(){
+      URL.revokeObjectURL(objectUrl);
+      var w=img.width,h=img.height;
+      if(w<=MAX&&h<=MAX&&file.size<=1.5*1024*1024){
+        resolve(file);return;
+      }
+      if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}
+      else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+      var canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(function(blob){
+        canvas.width=0;canvas.height=0;
+        if(!blob){resolve(file);return;}
+        var resized=new File([blob],file.name||'photo.jpg',{type:'image/jpeg',lastModified:Date.now()});
+        resolve(resized);
+      },'image/jpeg',QUALITY);
+    };
+    img.src=objectUrl;
   });
 }
 
@@ -1187,18 +1183,49 @@ function renderPhotoSlots(existingPhotos){
     var hasCls=ph?'has-photo':'';
     var imgSrc=ph?ph.src:'';
     var capTxt=ph?(ph.caption||'현장사진'):'';
-    html+='<div class="photo-slot '+hasCls+'" id="photoSlot'+i+'">'
-      +'<img src="'+imgSrc+'" onclick="viewPhoto(\''+imgSrc+'\')">'
+    html+='<div class="photo-slot '+hasCls+'" id="photoSlot'+i+'" onclick="openPhotoChoice('+i+')">'
+      +'<img src="'+imgSrc+'" onclick="if(slotPhotos['+i+']&&slotPhotos['+i+'].src){event.stopPropagation();viewPhoto(slotPhotos['+i+'].src);}">'
       +'<span class="photo-slot-add">📷</span>'
       +'<span class="photo-slot-caption">'+capTxt+'</span>'
       +'<button class="photo-slot-del" onclick="removeSlotPhoto('+i+',event)">✕</button>'
-      +'<input type="file" accept="image/*" onchange="handleSlotInput(this,'+i+')">'
+      +'<input type="file" accept="image/*" capture="environment" id="slotCam'+i+'" style="display:none;position:absolute;left:-9999px;" onchange="handleSlotInput(this,'+i+')">'
+      +'<input type="file" accept="image/*" id="slotGal'+i+'" style="display:none;position:absolute;left:-9999px;" onchange="handleSlotInput(this,'+i+')">'
       +'</div>';
   }
   html+='</div>';
   html+='<div class="upload-progress" id="photoUploadProgress"></div>';
-  html+='<div style="font-size:.74rem;color:#718096;margin-top:4px;">📷 각 슬롯을 클릭하여 사진 선택 (최대 5장) · ✕ 버튼으로 제거</div>';
+  /* 카메라/갤러리 선택 미니 팝업 */
+  html+='<div id="photoChoiceSheet" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.45);" onclick="closePhotoChoice(event)">'
+    +'<div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:20px 16px 32px;">'
+    +'<div style="font-weight:bold;font-size:.95rem;color:#2d3748;margin-bottom:16px;text-align:center;">사진 선택 방법</div>'
+    +'<button onclick="triggerCam()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f0f7ff;border:2px solid #90cdf4;border-radius:10px;font-size:.92rem;font-weight:bold;color:#1a56db;cursor:pointer;margin-bottom:10px;">📷 카메라로 촬영하기</button>'
+    +'<button onclick="triggerGal()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f0fff4;border:2px solid #9ae6b4;border-radius:10px;font-size:.92rem;font-weight:bold;color:#276749;cursor:pointer;margin-bottom:10px;">🖼️ 갤러리에서 선택하기</button>'
+    +'<button onclick="closePhotoChoice(null)" style="width:100%;padding:12px;background:#e2e8f0;border:none;border-radius:10px;font-size:.88rem;color:#4a5568;cursor:pointer;">취소</button>'
+    +'</div></div>';
+  html+='<div style="font-size:.74rem;color:#718096;margin-top:6px;">📷 슬롯 클릭 → 카메라 촬영 또는 갤러리 선택 (최대 5장) · ✕ 버튼으로 제거</div>';
   return html;
+}
+
+var _photoChoiceSlot=-1;
+function openPhotoChoice(idx){
+  if(slotPhotos[idx])return; /* 이미 사진 있으면 무시(삭제 버튼 사용) */
+  _photoChoiceSlot=idx;
+  document.getElementById('photoChoiceSheet').style.display='block';
+}
+function closePhotoChoice(e){
+  if(e&&e.target!==document.getElementById('photoChoiceSheet'))return;
+  document.getElementById('photoChoiceSheet').style.display='none';
+  _photoChoiceSlot=-1;
+}
+function triggerCam(){
+  document.getElementById('photoChoiceSheet').style.display='none';
+  if(_photoChoiceSlot<0)return;
+  document.getElementById('slotCam'+_photoChoiceSlot).click();
+}
+function triggerGal(){
+  document.getElementById('photoChoiceSheet').style.display='none';
+  if(_photoChoiceSlot<0)return;
+  document.getElementById('slotGal'+_photoChoiceSlot).click();
 }
 
 /* ════════════════════════════════════════
