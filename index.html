@@ -462,7 +462,7 @@ header h1{font-size:.95rem;font-weight:bold;}
       <ul>
         <li>사람의 얼굴, 차량 번호판, 실내 생활공간 등 개인정보가 포함된 사진을 촬영·업로드하여서는 아니 됩니다.</li>
         <li>수집된 사진 및 정보는 「개인정보 보호법」 제15조(개인정보의 수집·이용) 및 제29조(안전조치의무)에 따라 엄격히 관리됩니다.</li>
-        <li>업로드된 사진 데이터는 정해진 보관기간 경과 후 자동 삭제 처리됩니다.</li>
+        <li>업로드된 사진 데이터는 해당 연도 점검 종료 후 관리자에 의해 삭제 처리됩니다.</li>
         <li>본 시스템에 입력된 점검 결과는 「건축법」 및 「자연재해대책법」에 근거한 공무 수행 기록으로서, 임의 삭제·조작 시 관련 법령에 따른 책임을 질 수 있습니다.</li>
         <li>시스템 접근 기록(IP, 시간, 사용자)은 보안 목적으로 일정 기간 보관됩니다.</li>
       </ul>
@@ -1237,7 +1237,7 @@ function openCheckModal(siteId){
   var ins=getInspection(siteId)||{};
   var asgn=getAssignment(siteId);
   var savedChecks=ins.checks||{},savedMemos=ins.memos||{};
-  var savedPhotos=ins.photos||[],prevPhotos=ins.prevPhotos||[];
+  var savedPhotos=ins.photos||[];
   var typeLabel={alarm:'침수방지시설',water:'차수판',both:'침수방지시설+차수판(중복)'};
 
   document.getElementById('modalTitle').textContent='📋 '+site.dong+' ['+typeLabel[site.type]+'] 점검표';
@@ -1261,16 +1261,6 @@ function openCheckModal(siteId){
 
   html+='<div class="section-divider">📸 현장 사진 (최대 5장)</div>';
   html+=renderPhotoSlots(savedPhotos);
-
-  if(prevPhotos.length){
-    html+='<div class="section-divider">🕐 이전 점검 사진 (비교용)</div><div class="photo-grid">';
-    prevPhotos.forEach(function(p){
-      var src=typeof p==='string'?p:p.src;
-      var cap=typeof p==='string'?'이전 점검':p.caption||'이전 점검';
-      html+='<div class="photo-item"><img src="'+src+'" onclick="viewPhoto(\''+src+'\')"><div class="photo-caption">'+cap+'</div></div>';
-    });
-    html+='</div>';
-  }
 
   html+='<div class="section-divider">📝 종합 의견</div>'
     +'<textarea id="overallNote" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;font-size:.84rem;font-family:inherit;" placeholder="전체 점검 후 종합 의견을 입력하세요.">'+(ins.note||'')+'</textarea>';
@@ -1350,8 +1340,6 @@ async function saveInspection(){
   var note=(document.getElementById('overallNote')&&document.getElementById('overallNote').value)||'';
 
   var prevIns=getInspection(currentSiteId)||{};
-  var prevPhotos=prevIns.prevPhotos||[];
-  if(prevIns.photos&&prevIns.photos.length)prevPhotos=prevPhotos.concat(prevIns.photos).slice(-8);
 
   /* 슬롯에서 사진 수집 */
   var currentPhotos=slotPhotos.filter(Boolean).map(function(p){return{src:p.src,caption:p.caption};});
@@ -1360,7 +1348,7 @@ async function saveInspection(){
   try{
     await db.collection('inspections').doc(String(currentSiteId)).set({
       siteId:currentSiteId,dong:site.dong,addr:site.addr,type:site.type,
-      checks:checks,memos:memos,note:note,photos:currentPhotos,prevPhotos:prevPhotos,
+      checks:checks,memos:memos,note:note,photos:currentPhotos,
       inspector:currentUser.name,org:currentUser.org,dept:currentUser.dept,team:currentUser.team,
       time:new Date().toLocaleString('ko-KR'),completed:true,
       savedAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1549,7 +1537,7 @@ function renderReport(){
     var mobileRows=SITES.map(function(site,idx){
       var ins=getInspection(site.id)||{};
       var st=getSiteStatus(site.id);
-      var photoCnt=(ins.photos?ins.photos.length:0)+(ins.prevPhotos?ins.prevPhotos.length:0);
+      var photoCnt=(ins.photos?ins.photos.length:0);
       var addrShort=site.addr.replace('화성시 ','').replace(/,.*$/,'');
       return '<tr class="row-clickable" onclick="openDetailModal('+site.id+')">'
         +'<td class="rlt-num">'+(idx+1)+'</td>'
@@ -1582,7 +1570,7 @@ function renderReport(){
       var ng=Object.values(checks).filter(function(v){return v==='ng';}).length;
       var na=Object.values(checks).filter(function(v){return v==='na';}).length;
       var st=getSiteStatus(site.id);
-      var photoCnt=(ins.photos?ins.photos.length:0)+(ins.prevPhotos?ins.prevPhotos.length:0);
+      var photoCnt=(ins.photos?ins.photos.length:0);
       var addrShort=site.addr.replace('화성시 ','');
       var inspectorName=ins.inspector||asgn.assignee||'-';
       var orgStr=(ins.org||asgn.org||'')+((ins.team||asgn.team)?' '+(ins.team||asgn.team):'');
@@ -1665,7 +1653,7 @@ function openDetailModal(siteId){
   if(ins.note)html+='<div class="section-divider">📝 종합 의견</div>'
     +'<div style="background:#f7fafc;padding:12px;border-radius:8px;font-size:.84rem;line-height:1.7;">'+ins.note+'</div>';
 
-  var allPhotos=(ins.photos||[]).concat(ins.prevPhotos||[]);
+  var allPhotos=(ins.photos||[]);
   if(allPhotos.length){
     html+='<div class="section-divider">📸 현장 사진 (클릭: 확대 | ⬇️ 다운로드)</div><div class="photo-dl-grid">';
     allPhotos.forEach(function(p,i){
@@ -1706,21 +1694,21 @@ async function downloadAllPhotos(){
   var progressFill=document.getElementById('dlProgressFill');
   var sitesWithPhotos=SITES.filter(function(site){
     var ins=getInspection(site.id);
-    return((ins&&ins.photos?ins.photos.length:0)+(ins&&ins.prevPhotos?ins.prevPhotos.length:0))>0;
+    return(ins&&ins.photos?ins.photos.length:0)>0;
   });
   if(!sitesWithPhotos.length){showToast('📭 다운로드할 사진이 없습니다.');return;}
   btn.disabled=true;progressWrap.style.display='block';progressFill.style.width='0%';
   var totalPhotos=0;
   sitesWithPhotos.forEach(function(site){
     var ins=getInspection(site.id);
-    totalPhotos+=(ins&&ins.photos?ins.photos.length:0)+(ins&&ins.prevPhotos?ins.prevPhotos.length:0);
+    totalPhotos+=(ins&&ins.photos?ins.photos.length:0);
   });
   var downloaded=0,zip=new JSZip();
   try{
     for(var si=0;si<sitesWithPhotos.length;si++){
       var site=sitesWithPhotos[si];
       var ins=getInspection(site.id);
-      var allPhotos=(ins&&ins.photos?ins.photos:[]).concat(ins&&ins.prevPhotos?ins.prevPhotos:[]);
+      var allPhotos=(ins&&ins.photos?ins.photos:[]);
       if(!allPhotos.length)continue;
       var folder=zip.folder(site.dong+'_'+safeName(site.addr));
       for(var pi=0;pi<allPhotos.length;pi++){
