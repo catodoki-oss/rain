@@ -186,7 +186,10 @@
 
     <div class="profile-bar">
       <div class="who" id="whoAmI">-</div>
-      <button onclick="openProfileModal(false)">내 정보 수정</button>
+      <div style="display:flex;gap:6px;">
+        <button id="adminBtn" onclick="openAdminModal()">🔐 관리자</button>
+        <button onclick="openProfileModal(false)">내 정보 수정</button>
+      </div>
     </div>
     <div id="syncStatus" style="text-align:center;font-size:.72rem;color:var(--muted);margin:-8px 0 12px;"></div>
 
@@ -234,6 +237,26 @@
   </div>
 </div>
 
+<div class="overlay" id="adminOverlay">
+  <div class="modal">
+    <div style="font-size:2rem;">🔐</div>
+    <h3 id="adminModalTitle">관리자 로그인</h3>
+    <p>다 모이기 전까지는 누가 신청했는지 관리자만 볼 수 있어요.</p>
+    <div id="adminLoginForm">
+      <label style="text-align:left;">아이디</label>
+      <input type="text" id="adminId" placeholder="아이디" autocomplete="off">
+      <label style="text-align:left;">비밀번호</label>
+      <input type="password" id="adminPw" placeholder="비밀번호" autocomplete="off">
+      <button class="confirm" onclick="loginAdmin()">로그인</button>
+    </div>
+    <div id="adminLoggedInBox" style="display:none;">
+      <p style="color:#16a34a;font-weight:700;">✅ 관리자로 로그인되어 있어요.</p>
+      <button class="confirm" style="background:linear-gradient(90deg,#9ca3af,#6b7280);" onclick="logoutAdmin()">로그아웃</button>
+    </div>
+    <button class="confirm" style="background:#f3e8ff;color:#7c3aed;margin-top:8px;" onclick="closeAdminModal()">닫기</button>
+  </div>
+</div>
+
 <script type="module">
 // ---------- Firebase 초기화 ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -262,6 +285,61 @@ const GROUPS = ['1조','2조','스탭/기타'];
 
 let songs = [];
 let profile = null; // {name, group, mySessions:[]}
+
+// ---------- admin (누가 신청했는지는 관리자만 볼 수 있음) ----------
+const ADMIN_ID = 'admin';
+const ADMIN_PW = 'admin123';
+let isAdmin = false;
+
+function loadAdminLocal(){
+  try{ return sessionStorage.getItem('bandAdmin') === 'yes'; }catch(e){ return false; }
+}
+function saveAdminLocal(val){
+  try{
+    if(val) sessionStorage.setItem('bandAdmin','yes');
+    else sessionStorage.removeItem('bandAdmin');
+  }catch(e){}
+}
+
+function updateAdminBtn(){
+  const btn = document.getElementById('adminBtn');
+  if(!btn) return;
+  btn.textContent = isAdmin ? '🔓 관리자 모드' : '🔐 관리자';
+  btn.style.background = isAdmin ? '#dcfce7' : '';
+  btn.style.color = isAdmin ? '#16a34a' : '';
+}
+
+function openAdminModal(){
+  document.getElementById('adminId').value = '';
+  document.getElementById('adminPw').value = '';
+  document.getElementById('adminLoginForm').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('adminLoggedInBox').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('adminModalTitle').textContent = isAdmin ? '관리자 모드' : '관리자 로그인';
+  document.getElementById('adminOverlay').classList.add('show');
+}
+function closeAdminModal(){
+  document.getElementById('adminOverlay').classList.remove('show');
+}
+function loginAdmin(){
+  const id = document.getElementById('adminId').value.trim();
+  const pw = document.getElementById('adminPw').value;
+  if(id===ADMIN_ID && pw===ADMIN_PW){
+    isAdmin = true;
+    saveAdminLocal(true);
+    updateAdminBtn();
+    closeAdminModal();
+    render();
+  } else {
+    alert('아이디 또는 비밀번호가 올바르지 않아요.');
+  }
+}
+function logoutAdmin(){
+  isAdmin = false;
+  saveAdminLocal(false);
+  updateAdminBtn();
+  closeAdminModal();
+  render();
+}
 
 // ---------- init pickers ----------
 function buildSessionPicker(containerId, prechecked){
@@ -534,7 +612,7 @@ function render(){
         </div>
       </div>
       <div class="sess-grid" id="sess_${song.id}"></div>
-      ${complete ? `<div class="participants" id="part_${song.id}"></div>` : ''}
+      ${isAdmin ? `<div class="participants" id="part_${song.id}"></div>` : ''}
     `;
     list.appendChild(card);
 
@@ -562,15 +640,18 @@ function render(){
       sessDiv.appendChild(item);
     });
 
-    if(complete){
+    if(isAdmin){
       const partDiv = card.querySelector(`#part_${song.id}`);
-      let html = '<div class="p-title">🎊 참여 확정 멤버</div>';
+      let html = `<div class="p-title">${complete ? '🎊 참여 확정 멤버' : '🔍 현재 신청 현황 (관리자 전용)'}</div>`;
       song.neededSessions.forEach(s=>{
         const claimMap = song.claims[s]||{};
-        const names = Object.entries(claimMap)
-          .filter(([n,st])=>st==='green'||st==='red')
-          .map(([n,st])=>`${escapeHtml(n)}${st==='green'?'👍':'🙋'}${profile&&n===profile.name?'<span class="my-tag">나</span>':''}`)
-          .join(', ');
+        const entries = Object.entries(claimMap);
+        const names = entries.length
+          ? entries.map(([n,st])=>{
+              const icon = st==='green' ? '👍' : st==='red' ? '🙋' : '🙅';
+              return `${escapeHtml(n)}${icon}`;
+            }).join(', ')
+          : '<span style="color:var(--gray);">아직 없음</span>';
         html += `<div class="p-row">${EMOJI[s]} ${s}: ${names}</div>`;
       });
       partDiv.innerHTML = html;
@@ -586,6 +667,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
   } else {
     updateWhoAmI();
   }
+  isAdmin = loadAdminLocal();
+  updateAdminBtn();
   subscribeSongs(); // Firestore 실시간 구독 시작
 });
 
@@ -597,6 +680,10 @@ window.addSong = addSong;
 window.deleteSong = deleteSong;
 window.setStatus = setStatus;
 window.closeCelebModal = closeCelebModal;
+window.openAdminModal = openAdminModal;
+window.closeAdminModal = closeAdminModal;
+window.loginAdmin = loginAdmin;
+window.logoutAdmin = logoutAdmin;
 </script>
 </body>
 </html>
