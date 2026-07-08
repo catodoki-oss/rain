@@ -40,3 +40,1018 @@
 
   /* ---------- 홈 화면 ---------- */
   .home-screen{padding:50px 6px 20px; text-align:center;}
+  .home-logo{font-size:3rem; margin-bottom:6px;}
+  .home-title{
+    font-size:2.7rem; font-weight:900; letter-spacing:3px; margin:0 0 6px;
+    font-family:Georgia,'Times New Roman',serif;
+    background:linear-gradient(90deg,var(--pink),var(--blue));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .home-sub{color:var(--muted); font-size:.82rem; margin-bottom:44px;}
+  .home-sub2{color:var(--muted); font-size:.74rem; margin-bottom:20px;}
+  .home-btns{display:flex; flex-direction:column; gap:16px;}
+  .home-btn{
+    padding:22px; border-radius:20px; border:none; font-size:1.25rem; font-weight:900;
+    cursor:pointer; color:#fff; letter-spacing:1px;
+  }
+  .home-btn:active{transform:scale(.98);}
+  .home-btn.g1{ background:linear-gradient(135deg,#ff8fab,#ffb6c9); box-shadow:0 8px 18px rgba(255,143,171,.45);}
+  .home-btn.g2{ background:linear-gradient(135deg,#60a5fa,#93c5fd); box-shadow:0 8px 18px rgba(96,165,250,.45);}
+  .home-btn .small{display:block; font-size:.68rem; font-weight:600; opacity:.9; margin-top:3px; letter-spacing:0;}
+
+  /* ---------- 조 배너 (테마) ---------- */
+  .group-banner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 14px; border-radius:14px; margin-bottom:14px; font-weight:800; font-size:.88rem;
+  }
+  .group-banner.theme-1조{ background:linear-gradient(90deg,#ffe4ec,#ffd0e0); color:#c2255c; border:1.5px solid #ff8fab;}
+  .group-banner.theme-2조{ background:linear-gradient(90deg,#dbeafe,#c7e0ff); color:#1d4ed8; border:1.5px solid #60a5fa;}
+  .group-banner button{
+    border:none; background:rgba(255,255,255,.7); padding:6px 12px; border-radius:20px;
+    font-size:.72rem; font-weight:700; cursor:pointer; color:inherit;
+  }
+
+  .profile-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#fff; border:1px solid var(--border); border-radius:14px;
+    padding:9px 14px; margin-bottom:14px; font-size:.8rem;
+  }
+  .profile-bar .who{font-weight:700;color:#6d28d9;}
+  .profile-bar button{
+    border:none; background:#f3e8ff; color:#7c3aed; padding:6px 10px; border-radius:20px;
+    font-size:.72rem; font-weight:600; cursor:pointer;
+  }
+
+  /* ---------- 메인 4탭 ---------- */
+  .main-tabs{display:flex; gap:5px; margin-bottom:16px;}
+  .main-tab-btn{
+    flex:1; padding:9px 2px; border-radius:12px; border:1.5px solid var(--border);
+    background:#faf9fd; font-size:.68rem; font-weight:700; cursor:pointer; color:var(--muted);
+    line-height:1.4;
+  }
+  .main-tab-btn.active.theme-1조{background:linear-gradient(90deg,#ff8fab,#ffb3c6); color:#fff; border-color:transparent;}
+  .main-tab-btn.active.theme-2조{background:linear-gradient(90deg,#60a5fa,#93c5fd); color:#fff; border-color:transparent;}
+
+  .form-card{
+    background:#fff; border:1px solid var(--border); border-radius:18px;
+    padding:16px; margin-bottom:18px; box-shadow:0 3px 10px rgba(150,100,200,.06);
+  }
+  .form-card h2{margin:0 0 10px; font-size:.98rem; font-weight:800; color:#6d28d9;}
+  label{font-size:.72rem; color:var(--muted); display:block; margin:6px 0 3px;}
+  input[type=text], input[type=url]{
+    width:100%; padding:10px 12px; border:1.5px solid var(--border); border-radius:12px;
+    font-size:.88rem; background:#fbfaff; outline:none;
+  }
+  input:focus{border-color:var(--purple);}
+  .sessions-pick{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 12px;}
+  .sessions-pick label{
+    display:flex; align-items:center; gap:4px; background:#f6f0ff; padding:6px 10px;
+    border-radius:20px; font-size:.78rem; margin:0; cursor:pointer; border:1.5px solid transparent;
+  }
+  .sessions-pick input{margin:0;}
+  .sessions-pick label:has(input:checked){border-color:var(--purple); background:#ede4ff;}
+
+  button.primary{
+    width:100%; background:linear-gradient(90deg,var(--pink),var(--purple)); color:#fff;
+    border:none; padding:12px; border-radius:14px; font-size:.92rem; font-weight:800;
+    cursor:pointer; margin-top:4px;
+  }
+  button.primary:active{transform:scale(.98);}
+
+  .songs{display:flex; flex-direction:column; gap:16px;}
+  .song-card{
+    background:#fff; border:2px solid var(--border); border-radius:20px; padding:14px;
+    position:relative; transition:.25s;
+  }
+  .song-card.complete{
+    border:3px solid transparent;
+    background-image:linear-gradient(#fff,#fff),
+      linear-gradient(120deg,#ff8fab,#ffd36e,#8affc1,#6ec9ff,#c68fff);
+    background-origin:border-box; background-clip:padding-box, border-box;
+    animation:rainbow-shift 5s linear infinite; background-size:100% 100%,300% 300%;
+    box-shadow:0 6px 16px rgba(0,0,0,.08);
+  }
+  @keyframes rainbow-shift{
+    0%{background-position:0 0,0% 50%;} 100%{background-position:0 0,100% 50%;}
+  }
+  .song-card.hold{border-color:#d1d5db; background:#fbfbfc;}
+  .thumb-wrap{position:relative; width:100%; border-radius:14px; overflow:hidden; margin-bottom:10px; display:block;}
+  .thumb-wrap img{width:100%; display:block; aspect-ratio:16/9; object-fit:cover;}
+  .thumb-wrap .play{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.15);
+  }
+  .thumb-wrap .play span{
+    background:rgba(0,0,0,.55); color:#fff; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+  }
+  .song-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .song-title{font-size:1rem; font-weight:800;}
+  .meta{font-size:.74rem; color:var(--muted); margin-top:2px; line-height:1.5;}
+  .badge-complete{
+    background:linear-gradient(90deg,#22c55e,#4ade80); color:#fff; font-size:.68rem;
+    padding:4px 10px; border-radius:20px; font-weight:800; white-space:nowrap;
+  }
+  .badge-hold{
+    background:#6b7280; color:#fff; font-size:.68rem; padding:4px 10px; border-radius:20px;
+    font-weight:800; white-space:nowrap;
+  }
+  .del-btn{background:none; border:none; color:#d7d2e0; cursor:pointer; font-size:.95rem; padding:2px;}
+  .del-btn:active{color:#f87171;}
+
+  .sess-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
+  .sess-item{
+    background:#faf9fd; border:1px solid var(--border); border-radius:14px; padding:8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .sess-circle{
+    width:38px; height:38px; min-width:38px; border-radius:50%; background:#eceef3;
+    border:3px solid #d8dbe4; display:flex; align-items:center; justify-content:center;
+    font-size:1.05rem; position:relative;
+  }
+  .sess-circle.stat-green{background:#dcfce7; border-color:#22c55e;}
+  .sess-circle.stat-red{background:#fee2e2; border-color:#f87171;}
+  .sess-circle.stat-x{background:#f3f4f6; border-color:#9ca3af;}
+  .sess-circle .x-badge{
+    position:absolute; top:-4px; right:-4px; background:#6b7280; color:#fff;
+    font-size:.55rem; width:14px; height:14px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; font-weight:900;
+  }
+  .sess-mid{flex:1; min-width:0;}
+  .sess-name{font-size:.72rem; font-weight:700; margin-bottom:3px;}
+  .sess-actions{display:flex; gap:3px;}
+  .sess-actions button{
+    flex:1; border:none; border-radius:8px; padding:4px 0; font-size:.72rem;
+    background:#eceef3; cursor:pointer; line-height:1.4;
+  }
+  .sess-actions button.on-green{background:#22c55e; color:#fff;}
+  .sess-actions button.on-red{background:#f87171; color:#fff;}
+  .sess-actions button.on-x{background:#6b7280; color:#fff;}
+
+  .participants{
+    margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:.78rem;
+  }
+  .participants .p-title{font-weight:800; color:#16a34a; margin-bottom:4px;}
+  .participants .p-row{margin-bottom:2px;}
+  .empty{text-align:center; color:var(--muted); padding:30px 10px; font-size:.85rem;}
+
+  .kakao-warn{
+    display:none; background:#fff3cd; border:1.5px solid #ffe08a; color:#8a6d1a;
+    border-radius:12px; padding:10px 12px; margin-bottom:14px; font-size:.76rem; line-height:1.5;
+  }
+  .kakao-warn button{
+    display:block; width:100%; margin-top:8px; background:#fbbf24; color:#5c4400; border:none;
+    padding:9px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer;
+  }
+
+  /* ---------- 출석체크 ---------- */
+  .attend-card{
+    background:#fff; border:1px solid var(--border); border-radius:18px; padding:14px;
+    margin-bottom:18px; box-shadow:0 3px 10px rgba(150,100,200,.06);
+  }
+  .attend-date{font-weight:800; font-size:.95rem; margin-bottom:2px;}
+  .attend-summary{font-size:.72rem; color:var(--muted); margin-bottom:12px;}
+  .attend-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .attend-tile{
+    position:relative; background:#faf9fd; border:2px solid var(--border); border-radius:16px;
+    padding:14px 4px 10px; text-align:center; cursor:pointer; transition:.15s;
+  }
+  .attend-tile:active{transform:scale(.96);}
+  .attend-tile .icon{font-size:1.8rem; display:block; margin-bottom:5px; line-height:1;}
+  .attend-tile .name{font-size:.72rem; font-weight:800; color:var(--text);}
+  .attend-tile.go{background:#dcfce7; border-color:#22c55e;}
+  .attend-tile.no{background:#fee2e2; border-color:#f87171; opacity:.7;}
+  .attend-x{
+    position:absolute; top:5px; right:5px; width:22px; height:22px; border-radius:50%;
+    border:none; background:#fff; color:#b7bcc7; font-size:.68rem; font-weight:900; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.18);
+  }
+  .attend-x.active{background:#f87171; color:#fff;}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(30,20,50,.55); display:none;
+    align-items:center; justify-content:center; z-index:999; padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:22px; padding:24px 22px; text-align:center; max-width:340px;
+    width:100%; animation:pop .3s ease; max-height:85vh; overflow-y:auto;
+  }
+  @keyframes pop{from{transform:scale(.85); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .modal h3{margin:6px 0; font-size:1.15rem;}
+  .modal p{color:var(--muted); font-size:.82rem;}
+  .modal input[type=text]{margin-bottom:8px;}
+  .modal .grp-pick{display:flex; gap:6px; margin:8px 0 4px;}
+  .modal .grp-pick button{
+    flex:1; padding:9px; border-radius:12px; border:1.5px solid var(--border);
+    background:#faf9fd; font-size:.8rem; cursor:pointer; font-weight:700;
+  }
+  .modal .grp-pick button.sel{background:var(--purple); color:#fff; border-color:var(--purple);}
+  .modal .sessions-pick{justify-content:center;}
+  .modal button.confirm{
+    margin-top:14px; width:100%; background:linear-gradient(90deg,var(--pink),var(--purple));
+    color:#fff; border:none; padding:11px; border-radius:14px; cursor:pointer; font-weight:800;
+    font-size:.9rem;
+  }
+</style>
+</head>
+<body>
+<div class="phone-frame" id="phoneFrame">
+  <div class="phone-notch"></div>
+  <div class="phone-inner">
+
+    <div class="kakao-warn" id="kakaoWarn">
+      ⚠️ 카카오톡 브라우저에서는 글자 입력이 제한될 수 있어요.<br>아래 버튼을 눌러 외부 브라우저로 열어주세요.
+      <button onclick="openExternalBrowser()">🌐 크롬/사파리로 열기</button>
+    </div>
+
+    <!-- ---------- 홈 화면 ---------- -->
+    <div class="home-screen" id="homeScreen">
+      <div class="home-logo">🏰</div>
+      <div class="home-title">Castle</div>
+      <div class="home-sub">합주곡 추천 & 세션 모집</div>
+      <div class="home-sub2">어느 조로 들어가시나요?</div>
+      <div class="home-btns">
+        <button class="home-btn g1" onclick="enterGroup('1조')">1조 입장</button>
+        <button class="home-btn g2" onclick="enterGroup('2조')">2조 입장</button>
+      </div>
+    </div>
+
+    <!-- ---------- 조별 화면 ---------- -->
+    <div id="groupScreen" style="display:none;">
+
+      <div class="group-banner" id="groupBanner">
+        <span id="groupBannerLabel">1조</span>
+        <button onclick="goHome()">🏠 홈으로</button>
+      </div>
+
+      <h1>🎸 합주곡 추천</h1>
+      <div class="sub">세션에 스티커 붙이고, 다 모이면 무지개가 떠요 🌈</div>
+
+      <div class="profile-bar">
+        <div class="who" id="whoAmI">-</div>
+        <div style="display:flex;gap:6px;">
+          <button id="adminBtn" onclick="openAdminModal()">🔐 관리자</button>
+          <button onclick="openProfileModal(false)">내 정보 수정</button>
+        </div>
+      </div>
+      <div id="syncStatus" style="text-align:center;font-size:.72rem;color:var(--muted);margin:-8px 0 12px;"></div>
+
+      <div class="main-tabs" id="mainTabs">
+        <button class="main-tab-btn" data-tab="recommend" onclick="switchMainTab('recommend')">➕ 곡추천</button>
+        <button class="main-tab-btn" data-tab="attend" onclick="switchMainTab('attend')">📅 출석체크</button>
+        <button class="main-tab-btn" data-tab="active" onclick="switchMainTab('active')">🎶 추천곡</button>
+        <button class="main-tab-btn" data-tab="complete" onclick="switchMainTab('complete')">✅ 모집완료</button>
+        <button class="main-tab-btn" data-tab="hold" onclick="switchMainTab('hold')">⏸️ 보류곡</button>
+      </div>
+
+      <!-- 곡추천 탭 -->
+      <div id="tabPanel_recommend">
+        <div class="form-card">
+          <h2>➕ 곡 추천하기</h2>
+          <label>곡 제목</label>
+          <input type="text" id="titleInput" placeholder="예: Rolling in the Deep">
+          <label>유튜브 링크</label>
+          <input type="url" id="linkInput" placeholder="https://youtube.com/watch?v=...">
+          <label>원하는 보컬 (선택)</label>
+          <input type="text" id="vocalInput" placeholder="자유롭게 적어주세요">
+          <label>비고 (선택)</label>
+          <input type="text" id="noteInput" placeholder="예: 키 낮춰서 편곡 필요">
+          <label>필요한 세션</label>
+          <div class="sessions-pick" id="sessionsPick"></div>
+          <button class="primary" onclick="addSong()">곡 등록하기</button>
+        </div>
+      </div>
+
+      <!-- 출석체크 탭 -->
+      <div id="tabPanel_attend" style="display:none;">
+        <div class="attend-card">
+          <div class="attend-date" id="nextRehearsalLabel">📅 다음 합주 -</div>
+          <div class="attend-summary" id="attendSummary"></div>
+          <div class="attend-grid" id="attendList"></div>
+        </div>
+      </div>
+
+      <!-- 추천곡(진행중) 탭 -->
+      <div id="tabPanel_active" style="display:none;">
+        <div class="songs" id="songListActive"></div>
+      </div>
+
+      <!-- 모집완료 탭 -->
+      <div id="tabPanel_complete" style="display:none;">
+        <div class="songs" id="songListComplete"></div>
+      </div>
+
+      <!-- 보류곡 탭 -->
+      <div id="tabPanel_hold" style="display:none;">
+        <div class="songs" id="songListHold"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay" id="celebOverlay">
+  <div class="modal">
+    <div style="font-size:2.2rem;">🌈🎉</div>
+    <h3 id="celebTitle"></h3>
+    <p>모든 세션이 다 모였어요! 이 곡, 이제 합주 가능합니다.</p>
+    <button class="confirm" onclick="closeCelebModal()">신난다!</button>
+  </div>
+</div>
+
+<div class="overlay" id="profileOverlay">
+  <div class="modal">
+    <div style="font-size:2rem;">👋</div>
+    <h3>반가워요!</h3>
+    <p>이름과 조를 알려주시면 자동으로 기억할게요.</p>
+    <label style="text-align:left;">이름</label>
+    <input type="text" id="pfName" placeholder="이름 입력">
+    <label style="text-align:left;">내 조</label>
+    <div class="grp-pick" id="pfGroupPick"></div>
+    <label style="text-align:left;">주로 맡는 세션 (선택)</label>
+    <div class="sessions-pick" id="pfSessionsPick"></div>
+    <button class="confirm" onclick="saveProfile()">시작하기</button>
+  </div>
+</div>
+
+<div class="overlay" id="adminOverlay">
+  <div class="modal">
+    <div style="font-size:2rem;">🔐</div>
+    <h3 id="adminModalTitle">관리자 로그인</h3>
+    <p>다 모이기 전까지는 누가 신청했는지 관리자만 볼 수 있어요.</p>
+    <div id="adminLoginForm">
+      <label style="text-align:left;">아이디</label>
+      <input type="text" id="adminId" placeholder="아이디" autocomplete="off">
+      <label style="text-align:left;">비밀번호</label>
+      <input type="password" id="adminPw" placeholder="비밀번호" autocomplete="off">
+      <button class="confirm" onclick="loginAdmin()">로그인</button>
+    </div>
+    <div id="adminLoggedInBox" style="display:none;">
+      <p style="color:#16a34a;font-weight:700;">✅ 관리자로 로그인되어 있어요.</p>
+      <button class="confirm" style="background:linear-gradient(90deg,#9ca3af,#6b7280);" onclick="logoutAdmin()">로그아웃</button>
+    </div>
+    <button class="confirm" style="background:#f3e8ff;color:#7c3aed;margin-top:8px;" onclick="closeAdminModal()">닫기</button>
+  </div>
+</div>
+
+<script type="module">
+// ---------- Firebase 초기화 ----------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB8IzCTClpypc_Ja9I6mrLYCZ4tZlrY2oA",
+  authDomain: "band-98897.firebaseapp.com",
+  projectId: "band-98897",
+  storageBucket: "band-98897.firebasestorage.app",
+  messagingSenderId: "24639105658",
+  appId: "1:24639105658:web:1f4fad627c81152e47a9c3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+// 모든 사용자가 공유하는 문서 하나에 곡 목록 전체를 저장합니다.
+const songsDocRef = doc(db, "band", "songs");
+
+const SESSION_TYPES = ['보컬','기타1','기타2','베이스','키보드1','키보드2','드럼'];
+// 기타1/기타2는 색 구분 없이 동일하게, 베이스만 파란색으로 구분합니다.
+const EMOJI = {
+  '보컬':'🎤',
+  '기타1':'🎸',
+  '기타2':'🎸',
+  '베이스':'<span style="display:inline-block;filter:hue-rotate(230deg) saturate(1.8);">🎸</span>',
+  '키보드1':'🎹',
+  '키보드2':'🎹',
+  '드럼':'🥁'
+};
+const GROUPS = ['1조','2조','스탭/기타'];
+
+// 합주 조 편성표 기준 멤버 명단과 각자의 고정 세션(드럼 박한진·김대현은 두 조 겸임)
+const GROUP_MEMBERS = {
+  '1조': ['안지민','권승리','오우경','오지희','최병훈','신원철','조현조','한혜인','이지수','박한진','김대현'],
+  '2조': ['이승원','김범수','장지영','안유현','남재희','조은진','한정현','정유다','황승현','박한진','김대현']
+};
+const MEMBER_SESSIONS = {
+  '안지민':['보컬'], '권승리':['보컬'], '오우경':['보컬'], '오지희':['보컬','기타2'],
+  '최병훈':['기타1'], '신원철':['기타2'], '조현조':['베이스'],
+  '한혜인':['키보드1','키보드2'], '이지수':['키보드1'],
+  '이승원':['보컬'], '김범수':['보컬'], '장지영':['보컬'],
+  '안유현':['기타1'], '남재희':['기타2'], '조은진':['베이스'], '한정현':['베이스'],
+  '정유다':['키보드1','키보드2'], '황승현':['키보드1'],
+  '박한진':['드럼'], '김대현':['드럼']
+};
+
+let currentView = 'home';   // 'home' | 'group'
+let currentGroup = '1조';   // '1조' | '2조'
+let currentMainTab = 'active'; // 'recommend' | 'attend' | 'active' | 'hold'
+
+let songs = [];
+let profile = null; // {name, group, mySessions:[]}
+
+// ---------- 카카오톡 인앱 브라우저 감지 ----------
+function isKakaoInApp(){
+  return /KAKAOTALK/i.test(navigator.userAgent);
+}
+function openExternalBrowser(){
+  const url = location.href;
+  location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+}
+function checkKakaoWarning(){
+  if(isKakaoInApp()){
+    const el = document.getElementById('kakaoWarn');
+    if(el) el.style.display = 'block';
+  }
+}
+
+// ---------- admin (누가 신청했는지는 관리자만 볼 수 있음) ----------
+const ADMIN_ID = 'admin';
+const ADMIN_PW = 'admin123';
+let isAdmin = false;
+
+function loadAdminLocal(){
+  try{ return sessionStorage.getItem('bandAdmin') === 'yes'; }catch(e){ return false; }
+}
+function saveAdminLocal(val){
+  try{
+    if(val) sessionStorage.setItem('bandAdmin','yes');
+    else sessionStorage.removeItem('bandAdmin');
+  }catch(e){}
+}
+function updateAdminBtn(){
+  const btn = document.getElementById('adminBtn');
+  if(!btn) return;
+  btn.textContent = isAdmin ? '🔓 관리자 모드' : '🔐 관리자';
+  btn.style.background = isAdmin ? '#dcfce7' : '';
+  btn.style.color = isAdmin ? '#16a34a' : '';
+}
+function openAdminModal(){
+  document.getElementById('adminId').value = '';
+  document.getElementById('adminPw').value = '';
+  document.getElementById('adminLoginForm').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('adminLoggedInBox').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('adminModalTitle').textContent = isAdmin ? '관리자 모드' : '관리자 로그인';
+  document.getElementById('adminOverlay').classList.add('show');
+}
+function closeAdminModal(){
+  document.getElementById('adminOverlay').classList.remove('show');
+}
+function loginAdmin(){
+  const id = document.getElementById('adminId').value.trim();
+  const pw = document.getElementById('adminPw').value;
+  if(id===ADMIN_ID && pw===ADMIN_PW){
+    isAdmin = true;
+    saveAdminLocal(true);
+    updateAdminBtn();
+    closeAdminModal();
+    render();
+  } else {
+    alert('아이디 또는 비밀번호가 올바르지 않아요.');
+  }
+}
+function logoutAdmin(){
+  isAdmin = false;
+  saveAdminLocal(false);
+  updateAdminBtn();
+  closeAdminModal();
+  render();
+}
+
+// ---------- 홈 화면 / 조 전환 / 메인 탭 ----------
+function applyTheme(){
+  const frame = document.getElementById('phoneFrame');
+  frame.classList.remove('theme-1조','theme-2조');
+  frame.classList.add('theme-'+currentGroup);
+
+  const banner = document.getElementById('groupBanner');
+  banner.classList.remove('theme-1조','theme-2조');
+  banner.classList.add('theme-'+currentGroup);
+  document.getElementById('groupBannerLabel').textContent =
+    currentGroup==='1조' ? '🩷 1조' : '💙 2조';
+
+  document.querySelectorAll('.main-tab-btn').forEach(b=>{
+    b.classList.remove('theme-1조','theme-2조');
+    if(b.dataset.tab===currentMainTab) b.classList.add('theme-'+currentGroup);
+  });
+}
+
+function goHome(){
+  currentView = 'home';
+  document.getElementById('homeScreen').style.display = '';
+  document.getElementById('groupScreen').style.display = 'none';
+}
+
+function enterGroup(g){
+  currentGroup = g;
+  currentView = 'group';
+  try{ localStorage.setItem('bandGroupView', g); }catch(e){}
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('groupScreen').style.display = '';
+  applyTheme();
+  subscribeAttendance();
+  render();
+}
+
+function switchMainTab(tab){
+  currentMainTab = tab;
+  ['recommend','attend','active','complete','hold'].forEach(t=>{
+    const el = document.getElementById('tabPanel_'+t);
+    if(el) el.style.display = (t===tab) ? '' : 'none';
+  });
+  document.querySelectorAll('.main-tab-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===tab);
+  });
+  applyTheme();
+  if(tab==='attend') renderAttendance();
+}
+
+// ---------- 다음 합주 일자 계산 (1조: 첫째·셋째 화요일 / 2조: 둘째·넷째 화요일) ----------
+function computeNextRehearsalDate(group){
+  const wanted = group==='1조' ? [1,3] : [2,4];
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  for(let i=0;i<60;i++){
+    if(d.getDay()===2){ // 화요일
+      const nth = Math.ceil(d.getDate()/7);
+      if(wanted.includes(nth)) return new Date(d);
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return null;
+}
+function formatDateKorean(d){
+  const days = ['일','월','화','수','목','금','토'];
+  return `${d.getMonth()+1}월 ${d.getDate()}일(${days[d.getDay()]})`;
+}
+function dateKey(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ---------- 출석 체크 (Firestore, 조·다음 합주일 기준으로 자동 초기화) ----------
+let attendance = {};
+let unsubscribeAttendance = null;
+let currentRehearsalDate = null;
+let currentRehearsalDateStr = null;
+
+function attendanceDocRef(){
+  return doc(db, 'attendance', `${currentGroup}_${currentRehearsalDateStr}`);
+}
+function subscribeAttendance(){
+  if(unsubscribeAttendance) unsubscribeAttendance();
+  currentRehearsalDate = computeNextRehearsalDate(currentGroup);
+  currentRehearsalDateStr = currentRehearsalDate ? dateKey(currentRehearsalDate) : 'unknown';
+  unsubscribeAttendance = onSnapshot(attendanceDocRef(), snap=>{
+    attendance = snap.exists() ? (snap.data().records||{}) : {};
+    renderAttendance();
+  }, err=>{
+    console.error('출석 연결 실패', err);
+    attendance = {};
+    renderAttendance();
+  });
+}
+async function toggleAttendance(name, status){
+  const cur = attendance[name];
+  const next = {...attendance};
+  if(cur===status) delete next[name]; else next[name]=status;
+  attendance = next;
+  renderAttendance();
+  try{
+    await setDoc(attendanceDocRef(), { records: next, updatedAt: Date.now() });
+  }catch(e){
+    console.error('출석 저장 실패', e);
+    alert('출석 저장에 실패했어요. 다시 시도해주세요.');
+  }
+}
+function sortedGroupMembers(group){
+  const members = GROUP_MEMBERS[group] || [];
+  return [...members].sort((a,b)=>{
+    const ai = SESSION_TYPES.indexOf((MEMBER_SESSIONS[a]||[])[0] || '');
+    const bi = SESSION_TYPES.indexOf((MEMBER_SESSIONS[b]||[])[0] || '');
+    return ai - bi;
+  });
+}
+function renderAttendance(){
+  const members = sortedGroupMembers(currentGroup);
+  const dateLabel = currentRehearsalDate ? formatDateKorean(currentRehearsalDate) : '-';
+  const lbl = document.getElementById('nextRehearsalLabel');
+  if(lbl) lbl.textContent = `📅 다음 합주: ${dateLabel} · ${currentGroup}`;
+  const goCount = members.filter(m=>attendance[m]==='go').length;
+  const noCount = members.filter(m=>attendance[m]==='no').length;
+  const sum = document.getElementById('attendSummary');
+  if(sum) sum.textContent = `참석 ${goCount}명 · 불참 ${noCount}명 · 미응답 ${Math.max(members.length-goCount-noCount,0)}명`;
+  const wrap = document.getElementById('attendList');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  members.forEach(m=>{
+    const st = attendance[m];
+    // 같은 계열 세션(기타1/기타2, 키보드1/키보드2)은 아이콘이 동일하므로 중복 없이 한 번만 표시
+    const uniqueIcons = [...new Set((MEMBER_SESSIONS[m]||[]).map(s=>EMOJI[s]))].join(' ');
+    const tile = document.createElement('div');
+    tile.className = 'attend-tile' + (st==='go'?' go':'') + (st==='no'?' no':'');
+    tile.onclick = ()=>toggleAttendance(m,'go');
+    tile.innerHTML = `
+      <button class="attend-x ${st==='no'?'active':''}" onclick="event.stopPropagation();toggleAttendance('${m}','no')">✕</button>
+      <span class="icon">${uniqueIcons}</span>
+      <div class="name">${m}</div>
+    `;
+    wrap.appendChild(tile);
+  });
+}
+
+// ---------- init pickers ----------
+function buildSessionPicker(containerId, prechecked){
+  const div = document.getElementById(containerId);
+  div.innerHTML='';
+  SESSION_TYPES.forEach(s=>{
+    const id = containerId+'_'+s;
+    const lbl = document.createElement('label');
+    const checked = prechecked===undefined || prechecked.includes(s) ? 'checked' : '';
+    lbl.innerHTML = `<input type="checkbox" id="${id}" value="${s}" ${checked}> ${EMOJI[s]} ${s}`;
+    div.appendChild(lbl);
+  });
+}
+buildSessionPicker('sessionsPick');
+
+function buildGroupPicker(){
+  const div = document.getElementById('pfGroupPick');
+  div.innerHTML='';
+  GROUPS.forEach(g=>{
+    const b = document.createElement('button');
+    b.textContent = g;
+    b.type='button';
+    b.onclick = ()=>{
+      [...div.children].forEach(c=>c.classList.remove('sel'));
+      b.classList.add('sel');
+    };
+    b.dataset.group = g;
+    div.appendChild(b);
+  });
+}
+buildGroupPicker();
+
+// ---------- profile ----------
+function loadProfileLocal(){
+  try{
+    const raw = localStorage.getItem('bandProfile');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveProfileLocal(p){
+  try{ localStorage.setItem('bandProfile', JSON.stringify(p)); }catch(e){}
+}
+function openProfileModal(){
+  buildGroupPicker();
+  buildSessionPicker('pfSessionsPick', profile ? profile.mySessions : []);
+  document.getElementById('pfName').value = profile ? profile.name : '';
+  if(profile){
+    const btns = document.getElementById('pfGroupPick').children;
+    [...btns].forEach(b=>{ if(b.dataset.group===profile.group){ b.classList.add('sel'); }});
+  }
+  document.getElementById('profileOverlay').classList.add('show');
+}
+function saveProfile(){
+  const name = document.getElementById('pfName').value.trim();
+  if(!name){ alert('이름을 입력해주세요!'); return; }
+  const gDiv = document.getElementById('pfGroupPick');
+  const selBtn = [...gDiv.children].find(b=>b.classList.contains('sel'));
+  const group = selBtn ? selBtn.dataset.group : GROUPS[0];
+  const mySessions = SESSION_TYPES.filter(s=>document.getElementById('pfSessionsPick_'+s).checked);
+  profile = {name, group, mySessions};
+  saveProfileLocal(profile);
+  document.getElementById('profileOverlay').classList.remove('show');
+  updateWhoAmI();
+  render();
+}
+function updateWhoAmI(){
+  const el = document.getElementById('whoAmI');
+  if(!el) return;
+  el.textContent = profile ? `${profile.name} · ${profile.group}` : '-';
+}
+
+// ---------- storage (Firebase Firestore, 실시간 공유) ----------
+let unsubscribeSongs = null;
+function setSyncStatus(text, isError){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = isError ? '#f87171' : 'var(--muted)';
+}
+function subscribeSongs(){
+  if(unsubscribeSongs) unsubscribeSongs();
+  setSyncStatus('🔄 연결 중...', false);
+  unsubscribeSongs = onSnapshot(songsDocRef, (snap)=>{
+    if(snap.exists()){
+      songs = snap.data().list || [];
+    } else {
+      songs = [];
+    }
+    try{ localStorage.setItem('songs-backup', JSON.stringify(songs)); }catch(e){}
+    setSyncStatus('☁️ 실시간 동기화됨', false);
+    render();
+  }, (err)=>{
+    console.error('Firestore 연결 실패', err);
+    setSyncStatus('⚠️ 공유 저장소 연결 실패 - 이 기기에만 저장됩니다 (' + (err.code||err.message) + ')', true);
+    try{
+      const raw = localStorage.getItem('songs-backup');
+      songs = raw ? JSON.parse(raw) : [];
+    }catch(e){ songs = []; }
+    render();
+  });
+}
+async function saveSongs(){
+  try{ localStorage.setItem('songs-backup', JSON.stringify(songs)); }catch(e){}
+  try{
+    await setDoc(songsDocRef, { list: songs, updatedAt: Date.now() });
+    setSyncStatus('☁️ 실시간 동기화됨', false);
+  }catch(e){
+    console.error('Firestore 저장 실패', e);
+    setSyncStatus('⚠️ 저장 실패! 다른 사람에게 안 보여요 (' + (e.code||e.message) + ')', true);
+    alert('⚠️ 공유 저장소 저장에 실패했어요.\n이 기기에만 저장되고 다른 사람에게는 보이지 않습니다.\n관리자에게 파이어베이스 설정 확인을 요청하세요.\n\n오류: ' + (e.code||e.message));
+  }
+}
+
+// ---------- youtube helpers ----------
+function getYoutubeId(url){
+  if(!url) return null;
+  const patterns = [
+    /youtube\.com\/watch\?v=([\w-]{11})/,
+    /youtu\.be\/([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/,
+    /youtube\.com\/embed\/([\w-]{11})/
+  ];
+  for(const p of patterns){ const m=url.match(p); if(m) return m[1]; }
+  return null;
+}
+function normalizeUrl(url){
+  if(!url) return null;
+  let u = url.trim();
+  if(!u) return null;
+  if(!/^https?:\/\//i.test(u)) u = 'https://'+u;
+  return u;
+}
+
+// ---------- song CRUD ----------
+async function addSong(){
+  const title = document.getElementById('titleInput').value.trim();
+  const linkRaw = document.getElementById('linkInput').value.trim();
+  const vocal = document.getElementById('vocalInput').value.trim();
+  const note = document.getElementById('noteInput').value.trim();
+  if(!title){ alert('곡 제목을 입력해주세요!'); return; }
+
+  const needed = SESSION_TYPES.filter(s=>document.getElementById('sessionsPick_'+s).checked);
+  if(needed.length===0){ alert('필요한 세션을 하나 이상 선택해주세요!'); return; }
+
+  const claims = {};
+  needed.forEach(s=>claims[s]={});
+
+  const song = {
+    id: 'song_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    title, link: normalizeUrl(linkRaw), vocal, note,
+    group: currentGroup,
+    neededSessions: needed,
+    claims,
+    celebrated:false,
+    createdAt: Date.now()
+  };
+  songs.unshift(song);
+  await saveSongs();
+  document.getElementById('titleInput').value='';
+  document.getElementById('linkInput').value='';
+  document.getElementById('vocalInput').value='';
+  document.getElementById('noteInput').value='';
+  render();
+  switchMainTab('active');
+}
+
+async function deleteSong(id){
+  if(!confirm('이 곡을 목록에서 삭제할까요?')) return;
+  songs = songs.filter(s=>s.id!==id);
+  await saveSongs();
+  render();
+}
+
+function sessionAggregateStatus(claimMap){
+  const vals = Object.values(claimMap||{});
+  if(vals.includes('green')) return 'green';
+  if(vals.includes('red')) return 'red';
+  if(vals.length>0) return 'x';
+  return 'none';
+}
+function isHold(song){
+  return song.neededSessions.some(s => sessionAggregateStatus(song.claims[s]) === 'x');
+}
+function isComplete(song){
+  if(isHold(song)) return false;
+  return song.neededSessions.every(s=>{
+    const st = sessionAggregateStatus(song.claims[s]);
+    return st==='green' || st==='red';
+  });
+}
+
+async function setStatus(songId, session, status){
+  if(!profile){ openProfileModal(); return; }
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  if(!song.claims[session]) song.claims[session]={};
+  const cur = song.claims[session][profile.name];
+  if(cur===status){
+    delete song.claims[session][profile.name]; // toggle off
+  } else {
+    song.claims[session][profile.name]=status;
+  }
+  const wasComplete = song.celebrated;
+  await saveSongs();
+  render();
+  if(isComplete(song) && !wasComplete){
+    song.celebrated = true;
+    await saveSongs();
+    showCelebModal(song.title);
+    switchMainTab('complete');
+    render();
+  }
+}
+
+function showCelebModal(title){
+  document.getElementById('celebTitle').textContent = `"${title}" 합주 가능!`;
+  document.getElementById('celebOverlay').classList.add('show');
+}
+function closeCelebModal(){
+  document.getElementById('celebOverlay').classList.remove('show');
+}
+
+// ---------- render ----------
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function buildSongCard(song){
+  const complete = isComplete(song);
+  const hold = isHold(song);
+  const vid = getYoutubeId(song.link);
+  const card = document.createElement('div');
+  card.className = 'song-card' + (complete ? ' complete' : '') + (hold ? ' hold' : '');
+
+  let thumbHtml = '';
+  if(vid){
+    const watchUrl = `https://www.youtube.com/watch?v=${vid}`;
+    thumbHtml = `
+      <a class="thumb-wrap" href="${watchUrl}" target="_blank" rel="noopener">
+        <img src="https://img.youtube.com/vi/${vid}/mqdefault.jpg" alt="thumbnail">
+        <div class="play"><span>▶</span></div>
+      </a>`;
+  } else if(song.link){
+    thumbHtml = `<a href="${song.link}" target="_blank" rel="noopener" style="font-size:.75rem;color:#7c3aed;">🔗 링크로 듣기</a>`;
+  }
+
+  let metaParts = [];
+  if(song.vocal) metaParts.push(`🎤 희망 보컬: ${escapeHtml(song.vocal)}`);
+  if(song.note) metaParts.push(`📝 ${escapeHtml(song.note)}`);
+
+  card.innerHTML = `
+    ${thumbHtml}
+    <div class="song-top">
+      <div>
+        <div class="song-title">${escapeHtml(song.title)}</div>
+        ${metaParts.length ? `<div class="meta">${metaParts.join('<br>')}</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${complete ? `<span class="badge-complete">✅ 가능!</span>` : ''}
+        ${hold ? `<span class="badge-hold">⏸️ 보류</span>` : ''}
+        <button class="del-btn" onclick="deleteSong('${song.id}')">✕</button>
+      </div>
+    </div>
+    <div class="sess-grid" id="sess_${song.id}"></div>
+    ${isAdmin ? `<div class="participants" id="part_${song.id}"></div>` : ''}
+  `;
+
+  const sessDiv = card.querySelector(`#sess_${song.id}`);
+  song.neededSessions.forEach(s=>{
+    const claimMap = song.claims[s]||{};
+    const agg = sessionAggregateStatus(claimMap);
+    const myStatus = profile ? claimMap[profile.name] : undefined;
+    const item = document.createElement('div');
+    item.className = 'sess-item';
+    item.innerHTML = `
+      <div class="sess-circle ${agg!=='none' ? 'stat-'+agg : ''}">
+        ${EMOJI[s]}
+        ${agg==='x' ? '<span class="x-badge">✕</span>' : ''}
+      </div>
+      <div class="sess-mid">
+        <div class="sess-name">${s}</div>
+        <div class="sess-actions">
+          <button class="${myStatus==='green'?'on-green':''}" title="가능해요" onclick="setStatus('${song.id}','${s}','green')">👍</button>
+          <button class="${myStatus==='red'?'on-red':''}" title="하고싶어요" onclick="setStatus('${song.id}','${s}','red')">🙋</button>
+          <button class="${myStatus==='x'?'on-x':''}" title="너무 어려워요" onclick="setStatus('${song.id}','${s}','x')">🙅</button>
+        </div>
+      </div>
+    `;
+    sessDiv.appendChild(item);
+  });
+
+  if(isAdmin){
+    const partDiv = card.querySelector(`#part_${song.id}`);
+    let html = `<div class="p-title">${complete ? '🎊 참여 확정 멤버' : '🔍 현재 신청 현황 (관리자 전용)'}</div>`;
+    song.neededSessions.forEach(s=>{
+      const claimMap = song.claims[s]||{};
+      const entries = Object.entries(claimMap);
+      const names = entries.length
+        ? entries.map(([n,st])=>{
+            const icon = st==='green' ? '👍' : st==='red' ? '🙋' : '🙅';
+            return `${escapeHtml(n)}${icon}`;
+          }).join(', ')
+        : '<span style="color:var(--gray);">아직 없음</span>';
+      html += `<div class="p-row">${EMOJI[s]} ${s}: ${names}</div>`;
+    });
+    partDiv.innerHTML = html;
+  }
+
+  return card;
+}
+
+function render(){
+  updateWhoAmI();
+  renderAttendance();
+
+  const groupSongs = songs.filter(s => (s.group||'1조')===currentGroup);
+  const holdSongs = groupSongs.filter(s => isHold(s));
+  const completeSongs = groupSongs.filter(s => isComplete(s));
+  const activeSongs = groupSongs.filter(s => !isHold(s) && !isComplete(s));
+
+  const listActive = document.getElementById('songListActive');
+  const listComplete = document.getElementById('songListComplete');
+  const listHold = document.getElementById('songListHold');
+  if(!listActive || !listComplete || !listHold) return;
+
+  listActive.innerHTML = '';
+  if(activeSongs.length===0){
+    listActive.innerHTML = `<div class="empty">${currentGroup}에 모집 중인 곡이 없어요.<br>'곡추천' 탭에서 첫 곡을 추천해보세요! 🎶</div>`;
+  } else {
+    activeSongs.forEach(song => listActive.appendChild(buildSongCard(song)));
+  }
+
+  listComplete.innerHTML = '';
+  if(completeSongs.length===0){
+    listComplete.innerHTML = '<div class="empty">아직 모집 완료된 곡이 없어요.<br>세션이 다 모이면 여기로 자동으로 넘어와요! ✅</div>';
+  } else {
+    completeSongs.forEach(song => listComplete.appendChild(buildSongCard(song)));
+  }
+
+  listHold.innerHTML = '';
+  if(holdSongs.length===0){
+    listHold.innerHTML = '<div class="empty">보류된 곡이 없어요! 👍</div>';
+  } else {
+    holdSongs.forEach(song => listHold.appendChild(buildSongCard(song)));
+  }
+}
+
+// ---------- boot ----------
+window.addEventListener('DOMContentLoaded', ()=>{
+  checkKakaoWarning();
+  profile = loadProfileLocal();
+  if(!profile){
+    openProfileModal();
+  } else {
+    updateWhoAmI();
+  }
+  isAdmin = loadAdminLocal();
+  updateAdminBtn();
+
+  switchMainTab('active');
+
+  const savedGroup = localStorage.getItem('bandGroupView');
+  if(savedGroup && GROUP_MEMBERS[savedGroup]){
+    currentGroup = savedGroup;
+    currentView = 'group';
+    document.getElementById('homeScreen').style.display = 'none';
+    document.getElementById('groupScreen').style.display = '';
+    applyTheme();
+    subscribeAttendance();
+  }
+  subscribeSongs(); // Firestore 실시간 구독 시작 (조 전환과 무관하게 항상 전체 로딩)
+});
+
+// type="module" 스크립트는 함수가 자동으로 전역(window)에 노출되지 않으므로
+// HTML의 onclick="..." 에서 호출할 수 있도록 명시적으로 등록합니다.
+window.openProfileModal = openProfileModal;
+window.saveProfile = saveProfile;
+window.addSong = addSong;
+window.deleteSong = deleteSong;
+window.setStatus = setStatus;
+window.closeCelebModal = closeCelebModal;
+window.openAdminModal = openAdminModal;
+window.closeAdminModal = closeAdminModal;
+window.loginAdmin = loginAdmin;
+window.logoutAdmin = logoutAdmin;
+window.openExternalBrowser = openExternalBrowser;
+window.enterGroup = enterGroup;
+window.goHome = goHome;
+window.switchMainTab = switchMainTab;
+window.toggleAttendance = toggleAttendance;
+</script>
+</body>
+</html>
