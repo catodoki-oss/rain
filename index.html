@@ -188,6 +188,7 @@
       <div class="who" id="whoAmI">-</div>
       <button onclick="openProfileModal(false)">내 정보 수정</button>
     </div>
+    <div id="syncStatus" style="text-align:center;font-size:.72rem;color:var(--muted);margin:-8px 0 12px;"></div>
 
     <div class="form-card">
       <h2>➕ 곡 추천하기</h2>
@@ -339,8 +340,16 @@ function updateWhoAmI(){
 // onSnapshot으로 실시간 구독해서 다른 사람이 등록/수정하면 자동으로 화면이 갱신됩니다.
 let unsubscribeSongs = null;
 
+function setSyncStatus(text, isError){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = isError ? '#f87171' : 'var(--muted)';
+}
+
 function subscribeSongs(){
   if(unsubscribeSongs) unsubscribeSongs(); // 중복 구독 방지
+  setSyncStatus('🔄 연결 중...', false);
   unsubscribeSongs = onSnapshot(songsDocRef, (snap)=>{
     if(snap.exists()){
       songs = snap.data().list || [];
@@ -348,9 +357,11 @@ function subscribeSongs(){
       songs = [];
     }
     try{ localStorage.setItem('songs-backup', JSON.stringify(songs)); }catch(e){}
+    setSyncStatus('☁️ 실시간 동기화됨', false);
     render();
   }, (err)=>{
-    console.warn('Firestore 연결 실패, 로컬 백업 사용', err);
+    console.error('Firestore 연결 실패', err);
+    setSyncStatus('⚠️ 공유 저장소 연결 실패 - 이 기기에만 저장됩니다 (' + (err.code||err.message) + ')', true);
     try{
       const raw = localStorage.getItem('songs-backup');
       songs = raw ? JSON.parse(raw) : [];
@@ -363,8 +374,11 @@ async function saveSongs(){
   try{ localStorage.setItem('songs-backup', JSON.stringify(songs)); }catch(e){}
   try{
     await setDoc(songsDocRef, { list: songs, updatedAt: Date.now() });
+    setSyncStatus('☁️ 실시간 동기화됨', false);
   }catch(e){
-    console.warn('Firestore 저장 실패, 로컬 백업만 유지됨', e);
+    console.error('Firestore 저장 실패', e);
+    setSyncStatus('⚠️ 저장 실패! 다른 사람에게 안 보여요 (' + (e.code||e.message) + ')', true);
+    alert('⚠️ 공유 저장소 저장에 실패했어요.\n이 기기에만 저장되고 다른 사람에게는 보이지 않습니다.\n관리자에게 파이어베이스 설정 확인을 요청하세요.\n\n오류: ' + (e.code||e.message));
   }
 }
 
@@ -586,4 +600,3 @@ window.closeCelebModal = closeCelebModal;
 </script>
 </body>
 </html>
-
