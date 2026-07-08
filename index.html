@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎸 합주곡 추천 & 세션 모집</title>
 <style>
   :root{
@@ -149,6 +149,15 @@
   }
   .empty{text-align:center; color:var(--muted); padding:30px 10px; font-size:.85rem;}
 
+  .kakao-warn{
+    display:none; background:#fff3cd; border:1.5px solid #ffe08a; color:#8a6d1a;
+    border-radius:12px; padding:10px 12px; margin-bottom:14px; font-size:.76rem; line-height:1.5;
+  }
+  .kakao-warn button{
+    display:block; width:100%; margin-top:8px; background:#fbbf24; color:#5c4400; border:none;
+    padding:9px; border-radius:10px; font-weight:800; font-size:.8rem; cursor:pointer;
+  }
+
   .overlay{
     position:fixed; inset:0; background:rgba(30,20,50,.55); display:none;
     align-items:center; justify-content:center; z-index:999; padding:20px;
@@ -183,6 +192,11 @@
 
     <h1>🎸 합주곡 추천</h1>
     <div class="sub">세션에 스티커 붙이고, 다 모이면 무지개가 떠요 🌈</div>
+
+    <div class="kakao-warn" id="kakaoWarn">
+      ⚠️ 카카오톡 브라우저에서는 글자 입력이 제한될 수 있어요.<br>아래 버튼을 눌러 외부 브라우저로 열어주세요.
+      <button onclick="openExternalBrowser()">🌐 크롬/사파리로 열기</button>
+    </div>
 
     <div class="profile-bar">
       <div class="who" id="whoAmI">-</div>
@@ -285,6 +299,24 @@ const GROUPS = ['1조','2조','스탭/기타'];
 
 let songs = [];
 let profile = null; // {name, group, mySessions:[]}
+
+// ---------- 카카오톡 인앱 브라우저 감지 ----------
+// 카톡 인앱 브라우저는 자체 웹뷰 버그로 입력 필드에 글자가 안 써지는 경우가 있어서,
+// 감지되면 배너를 띄워 시스템 기본 브라우저(크롬/사파리)로 열도록 유도합니다.
+function isKakaoInApp(){
+  return /KAKAOTALK/i.test(navigator.userAgent);
+}
+function openExternalBrowser(){
+  const url = location.href;
+  // 카카오톡이 지원하는 "외부 브라우저로 열기" 전용 스킴
+  location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+}
+function checkKakaoWarning(){
+  if(isKakaoInApp()){
+    const el = document.getElementById('kakaoWarn');
+    if(el) el.style.display = 'block';
+  }
+}
 
 // ---------- admin (누가 신청했는지는 관리자만 볼 수 있음) ----------
 const ADMIN_ID = 'admin';
@@ -661,6 +693,7 @@ function render(){
 
 // ---------- boot ----------
 window.addEventListener('DOMContentLoaded', ()=>{
+  checkKakaoWarning();
   profile = loadProfileLocal();
   if(!profile){
     openProfileModal();
@@ -684,6 +717,7 @@ window.openAdminModal = openAdminModal;
 window.closeAdminModal = closeAdminModal;
 window.loginAdmin = loginAdmin;
 window.logoutAdmin = logoutAdmin;
+window.openExternalBrowser = openExternalBrowser;
 </script>
 </body>
 </html>
