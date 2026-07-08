@@ -156,8 +156,14 @@
     background:#6b7280; color:#fff; font-size:.68rem; padding:4px 10px; border-radius:20px;
     font-weight:800; white-space:nowrap;
   }
+  .badge-new{
+    background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#fff; font-size:.68rem;
+    padding:4px 10px; border-radius:20px; font-weight:800; white-space:nowrap;
+  }
   .del-btn{background:none; border:none; color:#d7d2e0; cursor:pointer; font-size:.95rem; padding:2px;}
   .del-btn:active{color:#f87171;}
+  .edit-btn{background:none; border:none; color:#c9c2e0; cursor:pointer; font-size:.95rem; padding:2px;}
+  .edit-btn:active{color:#7c3aed;}
 
   .sess-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
   .sess-item{
@@ -227,6 +233,24 @@
     display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.18);
   }
   .attend-x.active{background:#f87171; color:#fff;}
+
+  .attend-card-head{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:2px;}
+  .member-manage-btn{
+    border:none; background:#f3e8ff; color:#7c3aed; padding:6px 10px; border-radius:20px;
+    font-size:.68rem; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .member-row{
+    display:flex; align-items:center; gap:8px; padding:7px 2px;
+    border-bottom:1px solid var(--border); font-size:.82rem;
+  }
+  .member-row:last-child{border-bottom:none;}
+  .mr-icon{font-size:1rem; min-width:36px;}
+  .mr-name{flex:1; font-weight:700; text-align:left;}
+  .mr-del{
+    border:none; background:#fee2e2; color:#dc2626; padding:5px 10px; border-radius:14px;
+    font-size:.7rem; font-weight:700; cursor:pointer;
+  }
+  .member-manage-section-title{font-size:.78rem; font-weight:800; color:#6d28d9; text-align:left; margin-bottom:2px;}
 
   .overlay{
     position:fixed; inset:0; background:rgba(30,20,50,.55); display:none;
@@ -326,7 +350,10 @@
       <!-- 출석체크 탭 -->
       <div id="tabPanel_attend" style="display:none;">
         <div class="attend-card">
-          <div class="attend-date" id="nextRehearsalLabel">📅 다음 합주 -</div>
+          <div class="attend-card-head">
+            <div class="attend-date" id="nextRehearsalLabel">📅 다음 합주 -</div>
+            <button class="member-manage-btn" onclick="openMemberManageModal()">👥 멤버 관리</button>
+          </div>
           <div class="attend-summary" id="attendSummary"></div>
           <div class="attend-grid" id="attendList"></div>
         </div>
@@ -396,6 +423,44 @@
   </div>
 </div>
 
+<div class="overlay" id="editSongOverlay">
+  <div class="modal">
+    <div style="font-size:2rem;">✏️</div>
+    <h3>곡 정보 수정</h3>
+    <label style="text-align:left;">곡 제목</label>
+    <input type="text" id="editTitleInput" placeholder="예: Rolling in the Deep">
+    <label style="text-align:left;">유튜브 링크</label>
+    <input type="url" id="editLinkInput" placeholder="https://youtube.com/watch?v=...">
+    <label style="text-align:left;">원하는 보컬 (선택)</label>
+    <input type="text" id="editVocalInput" placeholder="자유롭게 적어주세요">
+    <label style="text-align:left;">비고 (선택)</label>
+    <input type="text" id="editNoteInput" placeholder="예: 키 낮춰서 편곡 필요">
+    <label style="text-align:left;">필요한 세션</label>
+    <div class="sessions-pick" id="editSessionsPick"></div>
+    <button class="confirm" onclick="saveEditSong()">수정 완료</button>
+    <button class="confirm" style="background:#f3e8ff;color:#7c3aed;margin-top:8px;" onclick="closeEditSongModal()">취소</button>
+  </div>
+</div>
+
+<div class="overlay" id="memberManageOverlay">
+  <div class="modal">
+    <div style="font-size:2rem;">👥</div>
+    <h3 id="memberManageGroupLabel">멤버 관리</h3>
+    <p>합주에 참여하는 멤버를 추가하거나 삭제할 수 있어요.</p>
+    <div class="member-manage-section-title">현재 멤버</div>
+    <div id="memberManageList" style="margin:6px 0 4px;"></div>
+    <div style="border-top:1px dashed var(--border); margin:14px 0 10px; padding-top:12px;">
+      <div class="member-manage-section-title">새 멤버 추가</div>
+      <label style="text-align:left;">이름</label>
+      <input type="text" id="newMemberName" placeholder="이름 입력">
+      <label style="text-align:left;">담당 세션 (2개 이상도 선택 가능)</label>
+      <div class="sessions-pick" id="newMemberSessionsPick"></div>
+      <button class="confirm" onclick="addMember()">➕ 멤버 추가</button>
+    </div>
+    <button class="confirm" style="background:#f3e8ff;color:#7c3aed;margin-top:8px;" onclick="closeMemberManageModal()">닫기</button>
+  </div>
+</div>
+
 <script type="module">
 // ---------- Firebase 초기화 ----------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -416,6 +481,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 // 모든 사용자가 공유하는 문서 하나에 곡 목록 전체를 저장합니다.
 const songsDocRef = doc(db, "band", "songs");
+// 조별 멤버 명단(이름 + 담당 세션)을 저장하는 공유 문서
+const membersDocRef = doc(db, "band", "members");
 
 const SESSION_TYPES = ['보컬','기타1','기타2','베이스','키보드1','키보드2','드럼'];
 // 기타1/기타2는 색 구분 없이 동일하게, 베이스만 파란색으로 구분합니다.
@@ -625,11 +692,14 @@ async function toggleAttendance(name, status){
     alert('출석 저장에 실패했어요. 다시 시도해주세요.');
   }
 }
+function currentGroupMembers(){
+  return (membersData && membersData[currentGroup]) || [];
+}
 function sortedGroupMembers(group){
-  const members = GROUP_MEMBERS[group] || [];
+  const members = (membersData && membersData[group]) || [];
   return [...members].sort((a,b)=>{
-    const ai = SESSION_TYPES.indexOf((MEMBER_SESSIONS[a]||[])[0] || '');
-    const bi = SESSION_TYPES.indexOf((MEMBER_SESSIONS[b]||[])[0] || '');
+    const ai = SESSION_TYPES.indexOf((a.sessions||[])[0] || '');
+    const bi = SESSION_TYPES.indexOf((b.sessions||[])[0] || '');
     return ai - bi;
   });
 }
@@ -638,27 +708,147 @@ function renderAttendance(){
   const dateLabel = currentRehearsalDate ? formatDateKorean(currentRehearsalDate) : '-';
   const lbl = document.getElementById('nextRehearsalLabel');
   if(lbl) lbl.textContent = `📅 다음 합주: ${dateLabel} · ${currentGroup}`;
-  const goCount = members.filter(m=>attendance[m]==='go').length;
-  const noCount = members.filter(m=>attendance[m]==='no').length;
+  const goCount = members.filter(m=>attendance[m.name]==='go').length;
+  const noCount = members.filter(m=>attendance[m.name]==='no').length;
   const sum = document.getElementById('attendSummary');
   if(sum) sum.textContent = `참석 ${goCount}명 · 불참 ${noCount}명 · 미응답 ${Math.max(members.length-goCount-noCount,0)}명`;
   const wrap = document.getElementById('attendList');
   if(!wrap) return;
   wrap.innerHTML='';
+  if(members.length===0){
+    wrap.innerHTML = `<div class="empty" style="grid-column:1/-1;">아직 등록된 멤버가 없어요.<br>'👥 멤버 관리'에서 멤버를 추가해보세요!</div>`;
+    return;
+  }
   members.forEach(m=>{
-    const st = attendance[m];
+    const st = attendance[m.name];
     // 같은 계열 세션(기타1/기타2, 키보드1/키보드2)은 아이콘이 동일하므로 중복 없이 한 번만 표시
-    const uniqueIcons = [...new Set((MEMBER_SESSIONS[m]||[]).map(s=>EMOJI[s]))].join(' ');
+    const uniqueIcons = [...new Set((m.sessions||[]).map(s=>EMOJI[s]))].join(' ') || '❔';
     const tile = document.createElement('div');
     tile.className = 'attend-tile' + (st==='go'?' go':'') + (st==='no'?' no':'');
-    tile.onclick = ()=>toggleAttendance(m,'go');
+    tile.onclick = ()=>toggleAttendance(m.name,'go');
     tile.innerHTML = `
-      <button class="attend-x ${st==='no'?'active':''}" onclick="event.stopPropagation();toggleAttendance('${m}','no')">✕</button>
+      <button class="attend-x ${st==='no'?'active':''}" onclick="event.stopPropagation();toggleAttendance('${m.name}','no')">✕</button>
       <span class="icon">${uniqueIcons}</span>
-      <div class="name">${m}</div>
+      <div class="name">${escapeHtml(m.name)}</div>
     `;
     wrap.appendChild(tile);
   });
+}
+
+// ---------- 멤버 관리 (Firestore, 조별 명단을 실시간 공유) ----------
+let membersData = null; // { '1조':[{name,sessions:[]}], '2조':[...] }
+let unsubscribeMembers = null;
+
+function buildDefaultMembersData(){
+  const data = {};
+  Object.keys(GROUP_MEMBERS).forEach(g=>{
+    data[g] = GROUP_MEMBERS[g].map(name=>({
+      name, sessions: MEMBER_SESSIONS[name] || []
+    }));
+  });
+  return data;
+}
+
+function subscribeMembers(){
+  if(unsubscribeMembers) unsubscribeMembers();
+  unsubscribeMembers = onSnapshot(membersDocRef, async (snap)=>{
+    if(snap.exists()){
+      membersData = snap.data().groups || {};
+    } else {
+      // 처음 접속 시 기존 하드코딩 명단을 기본값으로 Firestore에 저장
+      membersData = buildDefaultMembersData();
+      try{ await setDoc(membersDocRef, { groups: membersData, updatedAt: Date.now() }); }
+      catch(e){ console.error('멤버 초기 저장 실패', e); }
+    }
+    try{ localStorage.setItem('members-backup', JSON.stringify(membersData)); }catch(e){}
+    renderAttendance();
+  }, (err)=>{
+    console.error('멤버 목록 연결 실패', err);
+    try{
+      const raw = localStorage.getItem('members-backup');
+      membersData = raw ? JSON.parse(raw) : buildDefaultMembersData();
+    }catch(e){ membersData = buildDefaultMembersData(); }
+    renderAttendance();
+  });
+}
+
+async function saveMembers(){
+  try{ localStorage.setItem('members-backup', JSON.stringify(membersData)); }catch(e){}
+  try{
+    await setDoc(membersDocRef, { groups: membersData, updatedAt: Date.now() });
+  }catch(e){
+    console.error('멤버 저장 실패', e);
+    alert('멤버 정보 저장에 실패했어요.\n다른 사람에게는 반영되지 않을 수 있어요.\n오류: ' + (e.code||e.message));
+  }
+}
+
+function openMemberManageModal(){
+  const lbl = document.getElementById('memberManageGroupLabel');
+  if(lbl) lbl.textContent = `👥 ${currentGroup} 멤버 관리`;
+  renderMemberManageList();
+  document.getElementById('newMemberName').value = '';
+  buildSessionPicker('newMemberSessionsPick', []); // 새 멤버는 기본적으로 아무 세션도 체크 안 함
+  document.getElementById('memberManageOverlay').classList.add('show');
+}
+function closeMemberManageModal(){
+  document.getElementById('memberManageOverlay').classList.remove('show');
+}
+function renderMemberManageList(){
+  const wrap = document.getElementById('memberManageList');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const members = currentGroupMembers();
+  if(members.length===0){
+    wrap.innerHTML = '<div class="empty" style="padding:12px 2px;">아직 멤버가 없어요.</div>';
+    return;
+  }
+  members.forEach(m=>{
+    const icons = (m.sessions||[]).map(s=>EMOJI[s]).join(' ') || '❔';
+    const sessionNames = (m.sessions||[]).join(', ') || '세션 미지정';
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `
+      <span class="mr-icon">${icons}</span>
+      <span class="mr-name">${escapeHtml(m.name)}<div style="font-weight:400;color:var(--muted);font-size:.68rem;">${escapeHtml(sessionNames)}</div></span>
+      <button class="mr-del">삭제</button>
+    `;
+    row.querySelector('.mr-del').addEventListener('click', ()=>deleteMember(m.name));
+    wrap.appendChild(row);
+  });
+}
+async function addMember(){
+  const nameInput = document.getElementById('newMemberName');
+  const name = nameInput.value.trim();
+  if(!name){ alert('이름을 입력해주세요!'); return; }
+  const sessions = SESSION_TYPES.filter(s=>document.getElementById('newMemberSessionsPick_'+s).checked);
+  if(sessions.length===0){ alert('담당 세션을 하나 이상 선택해주세요! (2개 이상도 선택 가능해요)'); return; }
+  const list = currentGroupMembers();
+  if(list.some(m=>m.name===name)){ alert('이미 있는 이름이에요!'); return; }
+
+  membersData = { ...(membersData||{}), [currentGroup]: [...list, {name, sessions}] };
+  await saveMembers();
+  nameInput.value = '';
+  buildSessionPicker('newMemberSessionsPick', []);
+  renderMemberManageList();
+  renderAttendance();
+}
+async function deleteMember(name){
+  if(!confirm(`'${name}' 님을 ${currentGroup} 명단에서 삭제할까요?\n(출석 기록도 함께 사라져요)`)) return;
+  const list = currentGroupMembers().filter(m=>m.name!==name);
+  membersData = { ...(membersData||{}), [currentGroup]: list };
+  await saveMembers();
+
+  // 출석 기록에서도 제거
+  if(attendance[name]!==undefined){
+    const next = {...attendance};
+    delete next[name];
+    attendance = next;
+    try{ await setDoc(attendanceDocRef(), { records: next, updatedAt: Date.now() }); }
+    catch(e){ console.error('출석 정리 실패', e); }
+  }
+
+  renderMemberManageList();
+  renderAttendance();
 }
 
 // ---------- init pickers ----------
@@ -833,6 +1023,60 @@ async function deleteSong(id){
   render();
 }
 
+// ---------- song 수정 ----------
+let editingSongId = null;
+function editSong(id){
+  const song = songs.find(s=>s.id===id);
+  if(!song) return;
+  editingSongId = id;
+  document.getElementById('editTitleInput').value = song.title || '';
+  document.getElementById('editLinkInput').value = song.link || '';
+  document.getElementById('editVocalInput').value = song.vocal || '';
+  document.getElementById('editNoteInput').value = song.note || '';
+  buildSessionPicker('editSessionsPick', song.neededSessions || []);
+  document.getElementById('editSongOverlay').classList.add('show');
+}
+function closeEditSongModal(){
+  document.getElementById('editSongOverlay').classList.remove('show');
+  editingSongId = null;
+}
+async function saveEditSong(){
+  const song = songs.find(s=>s.id===editingSongId);
+  if(!song) return;
+
+  const title = document.getElementById('editTitleInput').value.trim();
+  if(!title){ alert('곡 제목을 입력해주세요!'); return; }
+  const linkRaw = document.getElementById('editLinkInput').value.trim();
+  const vocal = document.getElementById('editVocalInput').value.trim();
+  const note = document.getElementById('editNoteInput').value.trim();
+  const needed = SESSION_TYPES.filter(s=>document.getElementById('editSessionsPick_'+s).checked);
+  if(needed.length===0){ alert('필요한 세션을 하나 이상 선택해주세요!'); return; }
+
+  // 기존에 신청되어 있던 세션은 신청 현황(claims)을 그대로 유지하고,
+  // 새로 추가된 세션만 빈 값으로, 빠진 세션은 제거합니다.
+  const newClaims = {};
+  needed.forEach(s=>{ newClaims[s] = song.claims[s] || {}; });
+
+  song.title = title;
+  song.link = normalizeUrl(linkRaw);
+  song.vocal = vocal;
+  song.note = note;
+  song.neededSessions = needed;
+  song.claims = newClaims;
+
+  const wasComplete = song.celebrated;
+  await saveSongs();
+  closeEditSongModal();
+  render();
+  if(isComplete(song) && !wasComplete){
+    song.celebrated = true;
+    await saveSongs();
+    showCelebModal(song.title);
+    switchMainTab('complete');
+    render();
+  }
+}
+
 function sessionAggregateStatus(claimMap){
   const vals = Object.values(claimMap||{});
   if(vals.includes('green')) return 'green';
@@ -892,6 +1136,7 @@ function escapeHtml(str){
 function buildSongCard(song){
   const complete = isComplete(song);
   const hold = isHold(song);
+  const isNew = !!song.createdAt && (Date.now() - song.createdAt < 24*60*60*1000);
   const vid = getYoutubeId(song.link);
   const card = document.createElement('div');
   card.className = 'song-card' + (complete ? ' complete' : '') + (hold ? ' hold' : '');
@@ -920,8 +1165,10 @@ function buildSongCard(song){
         ${metaParts.length ? `<div class="meta">${metaParts.join('<br>')}</div>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
+        ${isNew ? `<span class="badge-new">🆕 NEW</span>` : ''}
         ${complete ? `<span class="badge-complete">✅ 가능!</span>` : ''}
         ${hold ? `<span class="badge-hold">⏸️ 보류</span>` : ''}
+        <button class="edit-btn" onclick="editSong('${song.id}')">✏️</button>
         <button class="del-btn" onclick="deleteSong('${song.id}')">✕</button>
       </div>
     </div>
@@ -1033,6 +1280,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     subscribeAttendance();
   }
   subscribeSongs(); // Firestore 실시간 구독 시작 (조 전환과 무관하게 항상 전체 로딩)
+  subscribeMembers(); // 멤버 명단도 조 전환과 무관하게 항상 구독
 });
 
 // type="module" 스크립트는 함수가 자동으로 전역(window)에 노출되지 않으므로
@@ -1041,6 +1289,9 @@ window.openProfileModal = openProfileModal;
 window.saveProfile = saveProfile;
 window.addSong = addSong;
 window.deleteSong = deleteSong;
+window.editSong = editSong;
+window.closeEditSongModal = closeEditSongModal;
+window.saveEditSong = saveEditSong;
 window.setStatus = setStatus;
 window.closeCelebModal = closeCelebModal;
 window.openAdminModal = openAdminModal;
@@ -1052,6 +1303,10 @@ window.enterGroup = enterGroup;
 window.goHome = goHome;
 window.switchMainTab = switchMainTab;
 window.toggleAttendance = toggleAttendance;
+window.openMemberManageModal = openMemberManageModal;
+window.closeMemberManageModal = closeMemberManageModal;
+window.addMember = addMember;
+window.deleteMember = deleteMember;
 </script>
 </body>
 </html>
