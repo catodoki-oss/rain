@@ -252,6 +252,42 @@
   }
   .member-manage-section-title{font-size:.78rem; font-weight:800; color:#6d28d9; text-align:left; margin-bottom:2px;}
 
+  .comments-section{margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);}
+  .comments-toggle{
+    width:100%; text-align:left; background:#faf9fd; border:1px solid var(--border);
+    border-radius:12px; padding:8px 12px; font-size:.76rem; font-weight:700; color:#6d28d9;
+    cursor:pointer;
+  }
+  .comments-body{margin-top:8px;}
+  .comment-item{
+    background:#faf9fd; border:1px solid var(--border); border-radius:12px;
+    padding:9px 11px; margin-bottom:7px;
+  }
+  .comment-head{display:flex; justify-content:space-between; align-items:baseline; gap:6px; margin-bottom:3px;}
+  .comment-author{font-weight:800; font-size:.76rem; color:var(--text);}
+  .comment-time{font-size:.64rem; color:var(--muted); white-space:nowrap;}
+  .comment-text{font-size:.8rem; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word;}
+  .comment-actions{display:flex; gap:8px; margin-top:5px;}
+  .comment-actions button{
+    border:none; background:none; color:#7c3aed; font-size:.68rem; font-weight:700;
+    cursor:pointer; padding:2px 0;
+  }
+  .comment-actions button.danger{color:#dc2626;}
+  .comment-edit-input{
+    width:100%; padding:8px 10px; border:1.5px solid var(--border); border-radius:10px;
+    font-size:.8rem; font-family:inherit; resize:vertical; min-height:50px; box-sizing:border-box;
+  }
+  .comment-add{display:flex; gap:6px; align-items:flex-end; margin-top:4px;}
+  .comment-add textarea{
+    flex:1; padding:8px 10px; border:1.5px solid var(--border); border-radius:10px;
+    font-size:.8rem; font-family:inherit; resize:vertical; min-height:38px; max-height:120px; box-sizing:border-box;
+  }
+  .comment-add button{
+    border:none; background:#7c3aed; color:#fff; padding:9px 14px; border-radius:10px;
+    font-size:.76rem; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .comment-empty{font-size:.74rem; color:var(--muted); padding:4px 2px 8px;}
+
   .overlay{
     position:fixed; inset:0; background:rgba(30,20,50,.55); display:none;
     align-items:center; justify-content:center; z-index:999; padding:20px;
@@ -1004,7 +1040,8 @@ async function addSong(){
     neededSessions: needed,
     claims,
     celebrated:false,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    comments: []
   };
   songs.unshift(song);
   await saveSongs();
@@ -1174,6 +1211,7 @@ function buildSongCard(song){
     </div>
     <div class="sess-grid" id="sess_${song.id}"></div>
     ${isAdmin ? `<div class="participants" id="part_${song.id}"></div>` : ''}
+    <div class="comments-section" id="comments_${song.id}"></div>
   `;
 
   const sessDiv = card.querySelector(`#sess_${song.id}`);
@@ -1217,7 +1255,142 @@ function buildSongCard(song){
     partDiv.innerHTML = html;
   }
 
+  renderComments(song);
+
   return card;
+}
+
+// ---------- 댓글 ----------
+let expandedComments = new Set(); // 펼쳐진 곡 id들 (렌더링과 무관하게 상태 유지)
+let editingCommentKey = null;     // 현재 수정 중인 댓글: songId+'::'+commentId
+let commentDrafts = {};           // songId -> 아직 등록 안 한 입력 중인 텍스트
+
+function toggleComments(songId){
+  if(expandedComments.has(songId)) expandedComments.delete(songId);
+  else expandedComments.add(songId);
+  const song = songs.find(s=>s.id===songId);
+  if(song) renderComments(song);
+}
+
+function saveDraft(songId, val){
+  commentDrafts[songId] = val;
+}
+
+function renderComments(song){
+  const wrap = document.getElementById(`comments_${song.id}`);
+  if(!wrap) return;
+  const comments = song.comments || [];
+  const expanded = expandedComments.has(song.id);
+
+  let html = `<button class="comments-toggle" onclick="toggleComments('${song.id}')">💬 댓글 ${comments.length}개 ${expanded ? '접기 ▲' : '보기 ▼'}</button>`;
+
+  if(expanded){
+    html += `<div class="comments-body">`;
+    if(comments.length===0){
+      html += `<div class="comment-empty">아직 댓글이 없어요. 이 곡에 대한 의견을 남겨보세요!</div>`;
+    } else {
+      comments.forEach(c=>{
+        const key = song.id+'::'+c.id;
+        const isMine = profile && c.author===profile.name;
+        const timeLabel = formatDateTimeShort(c.updatedAt || c.createdAt) + (c.updatedAt ? ' (수정됨)' : '');
+        html += `<div class="comment-item">
+          <div class="comment-head">
+            <span class="comment-author">${escapeHtml(c.author)}</span>
+            <span class="comment-time">${timeLabel}</span>
+          </div>`;
+        if(editingCommentKey===key){
+          html += `
+            <textarea class="comment-edit-input" id="editCommentInput_${c.id}">${escapeHtml(c.text)}</textarea>
+            <div class="comment-actions">
+              <button onclick="saveEditComment('${song.id}','${c.id}')">저장</button>
+              <button class="danger" onclick="cancelEditComment('${song.id}')">취소</button>
+            </div>`;
+        } else {
+          html += `<div class="comment-text">${escapeHtml(c.text)}</div>`;
+          if(isMine){
+            html += `<div class="comment-actions">
+              <button onclick="startEditComment('${song.id}','${c.id}')">수정</button>
+              <button class="danger" onclick="deleteComment('${song.id}','${c.id}')">삭제</button>
+            </div>`;
+          }
+        }
+        html += `</div>`;
+      });
+    }
+    const draft = commentDrafts[song.id] || '';
+    html += `
+      <div class="comment-add">
+        <textarea id="commentInput_${song.id}" placeholder="이 곡에 대한 의견을 남겨주세요!" oninput="saveDraft('${song.id}', this.value)">${escapeHtml(draft)}</textarea>
+        <button onclick="addComment('${song.id}')">등록</button>
+      </div>
+    </div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
+function formatDateTimeShort(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `${mm}.${dd} ${hh}:${mi}`;
+}
+
+async function addComment(songId){
+  if(!profile){ openProfileModal(); return; }
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  const input = document.getElementById(`commentInput_${songId}`);
+  const text = (input ? input.value : '').trim();
+  if(!text){ alert('댓글 내용을 입력해주세요!'); return; }
+
+  if(!song.comments) song.comments = [];
+  song.comments.push({
+    id: 'c_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    author: profile.name,
+    text,
+    createdAt: Date.now()
+  });
+  delete commentDrafts[songId];
+  expandedComments.add(songId);
+  await saveSongs();
+  render();
+}
+
+function startEditComment(songId, commentId){
+  editingCommentKey = songId+'::'+commentId;
+  const song = songs.find(s=>s.id===songId);
+  if(song) renderComments(song);
+}
+function cancelEditComment(songId){
+  editingCommentKey = null;
+  const song = songs.find(s=>s.id===songId);
+  if(song) renderComments(song);
+}
+async function saveEditComment(songId, commentId){
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  const comment = (song.comments||[]).find(c=>c.id===commentId);
+  if(!comment) return;
+  const input = document.getElementById(`editCommentInput_${commentId}`);
+  const text = (input ? input.value : '').trim();
+  if(!text){ alert('댓글 내용을 입력해주세요!'); return; }
+  comment.text = text;
+  comment.updatedAt = Date.now();
+  editingCommentKey = null;
+  await saveSongs();
+  render();
+}
+async function deleteComment(songId, commentId){
+  if(!confirm('이 댓글을 삭제할까요?')) return;
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  song.comments = (song.comments||[]).filter(c=>c.id!==commentId);
+  await saveSongs();
+  render();
 }
 
 function render(){
@@ -1307,6 +1480,13 @@ window.openMemberManageModal = openMemberManageModal;
 window.closeMemberManageModal = closeMemberManageModal;
 window.addMember = addMember;
 window.deleteMember = deleteMember;
+window.toggleComments = toggleComments;
+window.saveDraft = saveDraft;
+window.addComment = addComment;
+window.startEditComment = startEditComment;
+window.cancelEditComment = cancelEditComment;
+window.saveEditComment = saveEditComment;
+window.deleteComment = deleteComment;
 </script>
 </body>
 </html>
