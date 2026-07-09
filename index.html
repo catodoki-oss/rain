@@ -287,6 +287,11 @@
     font-size:.76rem; font-weight:700; cursor:pointer; white-space:nowrap;
   }
   .comment-empty{font-size:.74rem; color:var(--muted); padding:4px 2px 8px;}
+  .comment-anon-toggle{
+    display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--muted);
+    margin:6px 2px 6px; cursor:pointer;
+  }
+  .comment-anon-toggle input{width:14px; height:14px; cursor:pointer;}
 
   .overlay{
     position:fixed; inset:0; background:rgba(30,20,50,.55); display:none;
@@ -1255,7 +1260,7 @@ function buildSongCard(song){
     partDiv.innerHTML = html;
   }
 
-  renderComments(song);
+  renderComments(song, card.querySelector(`#comments_${song.id}`));
 
   return card;
 }
@@ -1264,6 +1269,7 @@ function buildSongCard(song){
 let expandedComments = new Set(); // 펼쳐진 곡 id들 (렌더링과 무관하게 상태 유지)
 let editingCommentKey = null;     // 현재 수정 중인 댓글: songId+'::'+commentId
 let commentDrafts = {};           // songId -> 아직 등록 안 한 입력 중인 텍스트
+let commentAnonDrafts = {};       // songId -> 익명 체크박스 상태
 
 function toggleComments(songId){
   if(expandedComments.has(songId)) expandedComments.delete(songId);
@@ -1275,9 +1281,12 @@ function toggleComments(songId){
 function saveDraft(songId, val){
   commentDrafts[songId] = val;
 }
+function saveAnonDraft(songId, checked){
+  commentAnonDrafts[songId] = checked;
+}
 
-function renderComments(song){
-  const wrap = document.getElementById(`comments_${song.id}`);
+function renderComments(song, container){
+  const wrap = container || document.getElementById(`comments_${song.id}`);
   if(!wrap) return;
   const comments = song.comments || [];
   const expanded = expandedComments.has(song.id);
@@ -1292,10 +1301,11 @@ function renderComments(song){
       comments.forEach(c=>{
         const key = song.id+'::'+c.id;
         const isMine = profile && c.author===profile.name;
+        const displayName = c.anonymous ? '🙈 익명' : c.author;
         const timeLabel = formatDateTimeShort(c.updatedAt || c.createdAt) + (c.updatedAt ? ' (수정됨)' : '');
         html += `<div class="comment-item">
           <div class="comment-head">
-            <span class="comment-author">${escapeHtml(c.author)}</span>
+            <span class="comment-author">${escapeHtml(displayName)}</span>
             <span class="comment-time">${timeLabel}</span>
           </div>`;
         if(editingCommentKey===key){
@@ -1318,7 +1328,11 @@ function renderComments(song){
       });
     }
     const draft = commentDrafts[song.id] || '';
+    const anonChecked = commentAnonDrafts[song.id] ? 'checked' : '';
     html += `
+      <label class="comment-anon-toggle">
+        <input type="checkbox" id="commentAnon_${song.id}" ${anonChecked} onchange="saveAnonDraft('${song.id}', this.checked)"> 🙈 익명으로 남기기
+      </label>
       <div class="comment-add">
         <textarea id="commentInput_${song.id}" placeholder="이 곡에 대한 의견을 남겨주세요!" oninput="saveDraft('${song.id}', this.value)">${escapeHtml(draft)}</textarea>
         <button onclick="addComment('${song.id}')">등록</button>
@@ -1346,15 +1360,19 @@ async function addComment(songId){
   const input = document.getElementById(`commentInput_${songId}`);
   const text = (input ? input.value : '').trim();
   if(!text){ alert('댓글 내용을 입력해주세요!'); return; }
+  const anonBox = document.getElementById(`commentAnon_${songId}`);
+  const isAnon = !!(anonBox && anonBox.checked);
 
   if(!song.comments) song.comments = [];
   song.comments.push({
     id: 'c_'+Date.now()+'_'+Math.floor(Math.random()*1000),
     author: profile.name,
+    anonymous: isAnon,
     text,
     createdAt: Date.now()
   });
   delete commentDrafts[songId];
+  delete commentAnonDrafts[songId];
   expandedComments.add(songId);
   await saveSongs();
   render();
@@ -1482,6 +1500,7 @@ window.addMember = addMember;
 window.deleteMember = deleteMember;
 window.toggleComments = toggleComments;
 window.saveDraft = saveDraft;
+window.saveAnonDraft = saveAnonDraft;
 window.addComment = addComment;
 window.startEditComment = startEditComment;
 window.cancelEditComment = cancelEditComment;
