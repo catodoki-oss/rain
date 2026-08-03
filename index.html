@@ -11,11 +11,11 @@
     --border:#eee0f5; --muted:#9096a8; --text:#2f2b3a;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html,body{min-height:100%;}
   body{
     margin:0; font-family:'Pretendard','Segoe UI','Malgun Gothic',sans-serif;
     background:var(--bg-outer); color:var(--text);
-    display:flex; justify-content:center; padding:18px 8px;
+    display:flex; justify-content:center; align-items:flex-start; padding:18px 8px;
   }
   .phone-frame{
     width:100%; max-width:430px; background:linear-gradient(180deg,#fff7fb,#f6f5ff);
@@ -29,7 +29,7 @@
     width:110px; height:20px; background:#2c2a3a; border-radius:0 0 14px 14px; z-index:5;
   }
   .phone-inner{
-    max-height:92vh; overflow-y:auto; padding:34px 14px 24px;
+    padding:34px 14px 48px;
   }
   h1{
     text-align:center; font-size:1.35rem; margin:0 0 2px; font-weight:800;
@@ -83,11 +83,11 @@
   }
 
   /* ---------- 메인 4탭 ---------- */
-  .main-tabs{display:flex; gap:5px; margin-bottom:16px;}
+  .main-tabs{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:16px;}
   .main-tab-btn{
-    flex:1; padding:9px 2px; border-radius:12px; border:1.5px solid var(--border);
-    background:#faf9fd; font-size:.68rem; font-weight:700; cursor:pointer; color:var(--muted);
-    line-height:1.4;
+    padding:9px 2px; border-radius:12px; border:1.5px solid var(--border);
+    background:#faf9fd; font-size:.72rem; font-weight:700; cursor:pointer; color:var(--muted);
+    line-height:1.3; white-space:nowrap;
   }
   .main-tab-btn.active.theme-1조{background:linear-gradient(90deg,#ff8fab,#ffb3c6); color:#fff; border-color:transparent;}
   .main-tab-btn.active.theme-2조{background:linear-gradient(90deg,#60a5fa,#93c5fd); color:#fff; border-color:transparent;}
@@ -173,7 +173,7 @@
   .setlist-item{
     display:flex; align-items:center; gap:10px; background:#fff;
     border:1.5px solid var(--border); border-radius:14px; padding:10px 12px;
-    box-shadow:0 2px 6px rgba(150,100,200,.05); touch-action:none;
+    box-shadow:0 2px 6px rgba(150,100,200,.05);
   }
   .setlist-item.dragging{
     box-shadow:0 10px 22px rgba(124,58,237,.28); border-color:var(--purple); opacity:.96;
