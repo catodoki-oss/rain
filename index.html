@@ -160,6 +160,41 @@
     background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#fff; font-size:.68rem;
     padding:4px 10px; border-radius:20px; font-weight:800; white-space:nowrap;
   }
+  .badge-reco{
+    background:#eef2ff; color:#4338ca; font-size:.68rem;
+    padding:4px 10px; border-radius:20px; font-weight:800; white-space:nowrap;
+  }
+
+  /* ---------- 오늘 연습(세트리스트) ---------- */
+  .setlist-hint{
+    font-size:.72rem; color:var(--muted); text-align:center; margin:-6px 0 12px;
+  }
+  .setlist-list{display:flex; flex-direction:column; gap:8px;}
+  .setlist-item{
+    display:flex; align-items:center; gap:10px; background:#fff;
+    border:1.5px solid var(--border); border-radius:14px; padding:10px 12px;
+    box-shadow:0 2px 6px rgba(150,100,200,.05); touch-action:none;
+  }
+  .setlist-item.dragging{
+    box-shadow:0 10px 22px rgba(124,58,237,.28); border-color:var(--purple); opacity:.96;
+  }
+  .setlist-placeholder{
+    border:2px dashed var(--purple); border-radius:14px; background:#f6f0ff;
+  }
+  .drag-handle{
+    cursor:grab; color:#c9c2e0; font-size:1.15rem; padding:4px 2px;
+    touch-action:none; user-select:none; line-height:1;
+  }
+  .drag-handle:active{cursor:grabbing;}
+  .setlist-order{
+    min-width:24px; height:24px; border-radius:50%; background:#f3e8ff; color:#7c3aed;
+    font-size:.7rem; font-weight:800; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .setlist-info{flex:1; min-width:0;}
+  .setlist-artist{font-size:.68rem; color:var(--muted); font-weight:700;}
+  .setlist-title{font-size:.9rem; font-weight:800; word-break:break-word;}
+
   .del-btn{background:none; border:none; color:#d7d2e0; cursor:pointer; font-size:.95rem; padding:2px;}
   .del-btn:active{color:#f87171;}
   .edit-btn{background:none; border:none; color:#c9c2e0; cursor:pointer; font-size:.95rem; padding:2px;}
@@ -324,6 +359,7 @@
       <div class="main-tabs" id="mainTabs">
         <button class="main-tab-btn" data-tab="recommend" onclick="switchMainTab('recommend')">➕ 곡추천</button>
         <button class="main-tab-btn" data-tab="attend" onclick="switchMainTab('attend')">📅 출석체크</button>
+        <button class="main-tab-btn" data-tab="setlist" onclick="switchMainTab('setlist')">🎼 오늘연습</button>
         <button class="main-tab-btn" data-tab="active" onclick="switchMainTab('active')">🎶 추천곡</button>
         <button class="main-tab-btn" data-tab="complete" onclick="switchMainTab('complete')">✅ 모집완료</button>
         <button class="main-tab-btn" data-tab="hold" onclick="switchMainTab('hold')">⏸️ 보류곡</button>
@@ -357,6 +393,20 @@
           <div class="attend-summary" id="attendSummary"></div>
           <div class="attend-grid" id="attendList"></div>
         </div>
+      </div>
+
+      <!-- 오늘 연습(세트리스트) 탭 -->
+      <div id="tabPanel_setlist" style="display:none;">
+        <div class="form-card">
+          <h2>🎼 오늘 연습곡 추가</h2>
+          <label>가수</label>
+          <input type="text" id="setlistArtistInput" placeholder="예: 아이유">
+          <label>곡 제목</label>
+          <input type="text" id="setlistTitleInput" placeholder="예: Love wins all">
+          <button class="primary" onclick="addSetlistSong()">+ 리스트에 추가</button>
+        </div>
+        <div class="setlist-hint">🖐️ 왼쪽 손잡이(⠿)를 누른 채 드래그하면 순서를 바꿀 수 있어요.</div>
+        <div class="setlist-list" id="setlistItems"></div>
       </div>
 
       <!-- 추천곡(진행중) 탭 -->
@@ -619,12 +669,13 @@ function enterGroup(g){
   document.getElementById('groupScreen').style.display = '';
   applyTheme();
   subscribeAttendance();
+  subscribeSetlist();
   render();
 }
 
 function switchMainTab(tab){
   currentMainTab = tab;
-  ['recommend','attend','active','complete','hold'].forEach(t=>{
+  ['recommend','attend','setlist','active','complete','hold'].forEach(t=>{
     const el = document.getElementById('tabPanel_'+t);
     if(el) el.style.display = (t===tab) ? '' : 'none';
   });
@@ -633,6 +684,7 @@ function switchMainTab(tab){
   });
   applyTheme();
   if(tab==='attend') renderAttendance();
+  if(tab==='setlist') renderSetlist();
 }
 
 // ---------- 다음 합주 일자 계산 (1조: 첫째·셋째 화요일 / 2조: 둘째·넷째 화요일) ----------
@@ -733,6 +785,178 @@ function renderAttendance(){
     `;
     wrap.appendChild(tile);
   });
+}
+
+// ---------- 오늘 연습(세트리스트) (Firestore, 조별로 실시간 공유) ----------
+let setlist = [];
+let unsubscribeSetlist = null;
+
+function setlistDocRef(){
+  return doc(db, 'setlist', currentGroup);
+}
+function subscribeSetlist(){
+  if(unsubscribeSetlist) unsubscribeSetlist();
+  unsubscribeSetlist = onSnapshot(setlistDocRef(), snap=>{
+    setlist = snap.exists() ? (snap.data().items || []) : [];
+    try{ localStorage.setItem('setlist-backup-'+currentGroup, JSON.stringify(setlist)); }catch(e){}
+    renderSetlist();
+  }, err=>{
+    console.error('오늘 연습곡 연결 실패', err);
+    try{
+      const raw = localStorage.getItem('setlist-backup-'+currentGroup);
+      setlist = raw ? JSON.parse(raw) : [];
+    }catch(e){ setlist = []; }
+    renderSetlist();
+  });
+}
+async function saveSetlist(){
+  try{ localStorage.setItem('setlist-backup-'+currentGroup, JSON.stringify(setlist)); }catch(e){}
+  try{
+    await setDoc(setlistDocRef(), { items: setlist, updatedAt: Date.now() });
+  }catch(e){
+    console.error('오늘 연습곡 저장 실패', e);
+    alert('오늘 연습곡 저장에 실패했어요.\n다른 사람에게는 반영되지 않을 수 있어요.\n오류: ' + (e.code||e.message));
+  }
+}
+
+async function addSetlistSong(){
+  const artistInput = document.getElementById('setlistArtistInput');
+  const titleInput = document.getElementById('setlistTitleInput');
+  const artist = artistInput.value.trim();
+  const title = titleInput.value.trim();
+  if(!title){ alert('곡 제목을 입력해주세요!'); return; }
+  const item = {
+    id: 'set_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    artist, title
+  };
+  setlist = [...setlist, item];
+  await saveSetlist();
+  artistInput.value = '';
+  titleInput.value = '';
+  renderSetlist();
+}
+
+async function deleteSetlistItem(id){
+  if(!confirm('이 곡을 오늘 연습 리스트에서 삭제할까요?')) return;
+  setlist = setlist.filter(it=>it.id!==id);
+  await saveSetlist();
+  renderSetlist();
+}
+
+async function reorderSetlistByIds(orderedIds){
+  const map = new Map(setlist.map(it=>[it.id,it]));
+  const reordered = orderedIds.map(id=>map.get(id)).filter(Boolean);
+  // 혹시 누락된 항목이 있다면 뒤에 붙여서 유실 방지
+  setlist.forEach(it=>{ if(!orderedIds.includes(it.id)) reordered.push(it); });
+  setlist = reordered;
+  await saveSetlist();
+}
+
+function renderSetlist(){
+  const wrap = document.getElementById('setlistItems');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  if(setlist.length===0){
+    wrap.innerHTML = `<div class="empty">아직 오늘 연습곡이 없어요.<br>위에서 가수와 곡 제목을 입력해 추가해보세요! 🎼</div>`;
+    return;
+  }
+  setlist.forEach((item, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'setlist-item';
+    row.dataset.id = item.id;
+    row.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <span class="setlist-order">${idx+1}</span>
+      <div class="setlist-info">
+        ${item.artist ? `<div class="setlist-artist">${escapeHtml(item.artist)}</div>` : ''}
+        <div class="setlist-title">${escapeHtml(item.title)}</div>
+      </div>
+      <button class="del-btn" onclick="deleteSetlistItem('${item.id}')">✕</button>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+// ---------- 오늘 연습 리스트 드래그앤드롭 (Pointer Events, 터치/마우스 공통) ----------
+function setupSetlistDrag(){
+  const listEl = document.getElementById('setlistItems');
+  if(!listEl) return;
+
+  let dragEl = null, placeholder = null, pointerId = null;
+  let startY = 0, startTop = 0;
+
+  listEl.addEventListener('pointerdown', (e)=>{
+    const handle = e.target.closest('.drag-handle');
+    if(!handle) return;
+    const item = handle.closest('.setlist-item');
+    if(!item) return;
+    e.preventDefault();
+
+    dragEl = item;
+    pointerId = e.pointerId;
+    try{ handle.setPointerCapture(pointerId); }catch(err){}
+
+    const rect = item.getBoundingClientRect();
+    startY = e.clientY;
+    startTop = rect.top;
+
+    placeholder = document.createElement('div');
+    placeholder.className = 'setlist-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    item.parentNode.insertBefore(placeholder, item.nextSibling);
+
+    item.style.width = rect.width + 'px';
+    item.style.position = 'fixed';
+    item.style.top = rect.top + 'px';
+    item.style.left = rect.left + 'px';
+    item.style.zIndex = 999;
+    item.style.pointerEvents = 'none';
+    item.classList.add('dragging');
+    document.body.appendChild(item);
+  });
+
+  window.addEventListener('pointermove', (e)=>{
+    if(!dragEl || e.pointerId!==pointerId) return;
+    const dy = e.clientY - startY;
+    dragEl.style.top = (startTop + dy) + 'px';
+
+    const siblings = [...listEl.querySelectorAll('.setlist-item')];
+    const dragRect = dragEl.getBoundingClientRect();
+    const dragCenter = dragRect.top + dragRect.height/2;
+    let inserted = false;
+    for(const sib of siblings){
+      const r = sib.getBoundingClientRect();
+      if(dragCenter < r.top + r.height/2){
+        listEl.insertBefore(placeholder, sib);
+        inserted = true;
+        break;
+      }
+    }
+    if(!inserted) listEl.appendChild(placeholder);
+  });
+
+  function endDrag(e){
+    if(!dragEl || e.pointerId!==pointerId) return;
+    dragEl.classList.remove('dragging');
+    dragEl.style.position = '';
+    dragEl.style.top = '';
+    dragEl.style.left = '';
+    dragEl.style.width = '';
+    dragEl.style.zIndex = '';
+    dragEl.style.pointerEvents = '';
+    placeholder.parentNode.insertBefore(dragEl, placeholder);
+    placeholder.remove();
+    placeholder = null;
+
+    const orderedIds = [...listEl.querySelectorAll('.setlist-item')].map(el=>el.dataset.id);
+    // 순번 라벨을 즉시 갱신
+    [...listEl.querySelectorAll('.setlist-order')].forEach((el,i)=>{ el.textContent = i+1; });
+    reorderSetlistByIds(orderedIds);
+
+    dragEl = null; pointerId = null;
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
 }
 
 // ---------- 멤버 관리 (Firestore, 조별 명단을 실시간 공유) ----------
@@ -1005,7 +1229,7 @@ async function addSong(){
     claims,
     celebrated:false,
     createdAt: Date.now(),
-    recommendedBy: profile ? profile.name : '익명'
+    recommendedBy: profile ? profile.name : '알 수 없음'
   };
   songs.unshift(song);
   await saveSongs();
@@ -1157,6 +1381,7 @@ function buildSongCard(song){
   let metaParts = [];
   if(song.vocal) metaParts.push(`🎤 희망 보컬: ${escapeHtml(song.vocal)}`);
   if(song.note) metaParts.push(`📝 ${escapeHtml(song.note)}`);
+  if(isAdmin && song.recommendedBy) metaParts.push(`💡 추천자: ${escapeHtml(song.recommendedBy)}`);
 
   card.innerHTML = `
     ${thumbHtml}
@@ -1204,7 +1429,6 @@ function buildSongCard(song){
   if(isAdmin){
     const partDiv = card.querySelector(`#part_${song.id}`);
     let html = `<div class="p-title">${complete ? '🎊 참여 확정 멤버' : '🔍 현재 신청 현황 (관리자 전용)'}</div>`;
-    html += `<div class="p-row">🙋‍♀️ 추천인: <b>${escapeHtml(song.recommendedBy || '알 수 없음')}</b></div>`;
     song.neededSessions.forEach(s=>{
       const claimMap = song.claims[s]||{};
       const entries = Object.entries(claimMap);
@@ -1280,9 +1504,11 @@ window.addEventListener('DOMContentLoaded', ()=>{
     document.getElementById('groupScreen').style.display = '';
     applyTheme();
     subscribeAttendance();
+    subscribeSetlist();
   }
   subscribeSongs(); // Firestore 실시간 구독 시작 (조 전환과 무관하게 항상 전체 로딩)
   subscribeMembers(); // 멤버 명단도 조 전환과 무관하게 항상 구독
+  setupSetlistDrag(); // 오늘 연습곡 드래그앤드롭 초기화
 });
 
 // type="module" 스크립트는 함수가 자동으로 전역(window)에 노출되지 않으므로
@@ -1309,6 +1535,8 @@ window.openMemberManageModal = openMemberManageModal;
 window.closeMemberManageModal = closeMemberManageModal;
 window.addMember = addMember;
 window.deleteMember = deleteMember;
+window.addSetlistSong = addSetlistSong;
+window.deleteSetlistItem = deleteSetlistItem;
 </script>
 </body>
 </html>
