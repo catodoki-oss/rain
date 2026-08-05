@@ -236,6 +236,39 @@
   .participants .p-row{margin-bottom:2px;}
   .empty{text-align:center; color:var(--muted); padding:30px 10px; font-size:.85rem;}
 
+  /* ---------- 댓글 ---------- */
+  .comments{
+    margin-top:12px; padding-top:10px; border-top:1px dashed var(--border);
+  }
+  .comments .c-title{font-weight:800; color:#6d28d9; font-size:.78rem; margin-bottom:8px;}
+  .comment-list{display:flex; flex-direction:column; gap:8px; margin-bottom:8px;}
+  .comment-item{
+    background:#faf9fd; border:1px solid var(--border); border-radius:12px;
+    padding:8px 10px; font-size:.78rem; position:relative;
+  }
+  .comment-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;}
+  .comment-author{font-weight:800; color:#7c3aed; font-size:.74rem;}
+  .comment-time{font-size:.65rem; color:var(--muted);}
+  .comment-text{line-height:1.45; word-break:break-word; white-space:pre-wrap;}
+  .comment-del{
+    background:none; border:none; color:#d7d2e0; cursor:pointer; font-size:.85rem;
+    padding:2px 4px; margin-left:6px;
+  }
+  .comment-del:active{color:#f87171;}
+  .comment-empty{color:var(--muted); font-size:.74rem; padding:2px 0 6px;}
+  .comment-form{display:flex; gap:6px;}
+  .comment-form input[type=text]{
+    flex:1; padding:8px 10px; font-size:.8rem; border:1.5px solid var(--border);
+    border-radius:20px; background:#fbfaff; outline:none;
+  }
+  .comment-form input[type=text]:focus{border-color:var(--purple);}
+  .comment-form button{
+    border:none; background:linear-gradient(90deg,var(--pink),var(--purple)); color:#fff;
+    padding:0 14px; border-radius:20px; font-size:.78rem; font-weight:800; cursor:pointer;
+    white-space:nowrap;
+  }
+  .comment-form button:active{transform:scale(.96);}
+
   .kakao-warn{
     display:none; background:#fff3cd; border:1.5px solid #ffe08a; color:#8a6d1a;
     border-radius:12px; padding:10px 12px; margin-bottom:14px; font-size:.76rem; line-height:1.5;
@@ -1229,7 +1262,8 @@ async function addSong(){
     claims,
     celebrated:false,
     createdAt: Date.now(),
-    recommendedBy: profile ? profile.name : '알 수 없음'
+    recommendedBy: profile ? profile.name : '알 수 없음',
+    comments: []
   };
   songs.unshift(song);
   await saveSongs();
@@ -1343,6 +1377,50 @@ async function setStatus(songId, session, status){
   }
 }
 
+// ---------- 댓글 ----------
+function formatCommentTime(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString()===now.toDateString();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  if(sameDay) return `${hh}:${mm}`;
+  return `${d.getMonth()+1}/${d.getDate()} ${hh}:${mm}`;
+}
+
+async function addComment(songId){
+  if(!profile){ openProfileModal(); return; }
+  const input = document.getElementById('cmtInput_'+songId);
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  if(!song.comments) song.comments = [];
+  song.comments.push({
+    id: 'cmt_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    author: profile.name,
+    text,
+    createdAt: Date.now()
+  });
+  input.value = '';
+  await saveSongs();
+  render();
+}
+
+async function deleteComment(songId, commentId){
+  const song = songs.find(s=>s.id===songId);
+  if(!song || !song.comments) return;
+  const c = song.comments.find(c=>c.id===commentId);
+  if(!c) return;
+  if(!profile || (c.author!==profile.name && !isAdmin)) return;
+  if(!confirm('이 댓글을 삭제할까요?')) return;
+  song.comments = song.comments.filter(c=>c.id!==commentId);
+  await saveSongs();
+  render();
+}
+
 function showCelebModal(title){
   document.getElementById('celebTitle').textContent = `"${title}" 합주 가능!`;
   document.getElementById('celebOverlay').classList.add('show');
@@ -1400,6 +1478,14 @@ function buildSongCard(song){
     </div>
     <div class="sess-grid" id="sess_${song.id}"></div>
     ${isAdmin ? `<div class="participants" id="part_${song.id}"></div>` : ''}
+    <div class="comments">
+      <div class="c-title">💬 댓글</div>
+      <div class="comment-list" id="cmts_${song.id}"></div>
+      <div class="comment-form">
+        <input type="text" id="cmtInput_${song.id}" placeholder="댓글을 남겨보세요" onkeydown="if(event.key==='Enter'){addComment('${song.id}');}">
+        <button onclick="addComment('${song.id}')">등록</button>
+      </div>
+    </div>
   `;
 
   const sessDiv = card.querySelector(`#sess_${song.id}`);
@@ -1441,6 +1527,28 @@ function buildSongCard(song){
       html += `<div class="p-row">${EMOJI[s]} ${s}: ${names}</div>`;
     });
     partDiv.innerHTML = html;
+  }
+
+  const cmtDiv = card.querySelector(`#cmts_${song.id}`);
+  const comments = song.comments || [];
+  if(comments.length===0){
+    cmtDiv.innerHTML = `<div class="comment-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요!</div>`;
+  } else {
+    cmtDiv.innerHTML = comments.map(c=>{
+      const canDelete = profile && (c.author===profile.name || isAdmin);
+      return `
+        <div class="comment-item">
+          <div class="comment-head">
+            <span class="comment-author">${escapeHtml(c.author)}</span>
+            <span>
+              <span class="comment-time">${formatCommentTime(c.createdAt)}</span>
+              ${canDelete ? `<button class="comment-del" onclick="deleteComment('${song.id}','${c.id}')">✕</button>` : ''}
+            </span>
+          </div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   return card;
