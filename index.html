@@ -200,13 +200,11 @@
   .edit-btn{background:none; border:none; color:#c9c2e0; cursor:pointer; font-size:.95rem; padding:2px;}
   .edit-btn:active{color:#7c3aed;}
 
-  .sess-grid{display:grid; grid-template-columns:1fr; gap:8px; margin-top:12px;}
+  .sess-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;}
   .sess-item{
-    background:#faf9fd; border:1px solid var(--border); border-radius:14px; padding:8px 8px 9px;
-    display:flex; flex-direction:column; align-items:stretch; gap:7px;
+    background:#faf9fd; border:1px solid var(--border); border-radius:14px; padding:8px;
+    display:flex; align-items:center; gap:8px;
   }
-  .sess-head{display:flex; align-items:center; gap:8px;}
-  .sess-head .sess-name{margin:0; font-size:.8rem;}
   .sess-circle{
     width:38px; height:38px; min-width:38px; border-radius:50%; background:#eceef3;
     border:3px solid #d8dbe4; display:flex; align-items:center; justify-content:center;
@@ -223,28 +221,31 @@
   }
   .sess-mid{flex:1; min-width:0;}
   .sess-name{font-size:.72rem; font-weight:700; margin-bottom:3px;}
-  .sess-actions{display:flex; gap:3px; align-items:stretch;}
+  .sess-actions{display:flex; gap:3px;}
   .sess-actions button{
-    flex:1; min-width:0; border:none; border-radius:9px; padding:5px 0 4px;
-    background:#eceef3; cursor:pointer; line-height:1.2;
-    display:flex; flex-direction:column; align-items:center; gap:1px; color:var(--text);
+    flex:1; border:none; border-radius:8px; padding:4px 0; font-size:.72rem;
+    background:#eceef3; cursor:pointer; line-height:1.4;
   }
-  .sess-actions button:active{transform:scale(.96);}
-  .sess-actions button.pos{background:#eefaf1;}
-  .sess-actions button.neg{background:#f1f2f6;}
-  .sess-actions .sep{width:1px; background:var(--border); margin:3px 2px; flex:none;}
-  .sess-actions .emo{font-size:.95rem; line-height:1.25;}
-  .sess-actions .lbl{font-size:.58rem; font-weight:700; white-space:nowrap; display:flex; align-items:center; gap:2px;}
-  .sess-actions .cnt{
-    background:rgba(0,0,0,.12); border-radius:8px; padding:0 4px; font-size:.58rem; font-weight:800; min-width:13px; text-align:center;
-  }
-  .sess-actions .cnt.zero{opacity:.45;}
   .sess-actions button.on-green{background:#22c55e; color:#fff;}
   .sess-actions button.on-red{background:#f87171; color:#fff;}
   .sess-actions button.on-later{background:#f59e0b; color:#fff;}
-  .sess-actions button.on-meh{background:#9ca3af; color:#fff;}
   .sess-actions button.on-x{background:#6b7280; color:#fff;}
-  .sess-actions button[class*="on-"] .cnt{background:rgba(255,255,255,.35);}
+
+  /* ---------- 곡 단위 좋아요 / 별로에요 (익명, 숫자만) ---------- */
+  .song-react{display:flex; gap:8px; margin-top:10px;}
+  .react-btn{
+    flex:1; border:1.5px solid var(--border); background:#faf9fd; color:var(--text);
+    border-radius:12px; padding:8px 4px; font-size:.78rem; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .react-btn:active{transform:scale(.97);}
+  .react-btn b{
+    background:rgba(0,0,0,.08); border-radius:10px; padding:0 7px; font-size:.74rem;
+    font-weight:800; min-width:20px; text-align:center;
+  }
+  .react-btn.like.on{background:#ff8fab; border-color:#ff8fab; color:#fff;}
+  .react-btn.dislike.on{background:#6b7280; border-color:#6b7280; color:#fff;}
+  .react-btn.on b{background:rgba(255,255,255,.3);}
 
   /* ---------- 버튼 설명 배너 (추천곡 탭 상단 고정) ---------- */
   .btn-guide{
@@ -259,13 +260,14 @@
   .btn-guide-body{padding:8px 10px 9px; font-size:.7rem; line-height:1.45;}
   .btn-guide.collapsed .btn-guide-body{display:none;}
   .guide-group{border-radius:10px; padding:6px 8px; margin-bottom:6px;}
-  .guide-group.pos{background:#f0fdf4; border:1px solid #bbf7d0;}
-  .guide-group.neg{background:#f5f5f7; border:1px solid #e0e0e6;}
+  .guide-group.sess{background:#f0fdf4; border:1px solid #bbf7d0;}
+  .guide-group.song{background:#fdf4ff; border:1px solid #f5d0fe;}
   .guide-title{font-weight:800; font-size:.7rem; margin-bottom:3px;}
-  .guide-group.pos .guide-title{color:#15803d;}
-  .guide-group.neg .guide-title{color:#4b5563;}
+  .guide-group.sess .guide-title{color:#15803d;}
+  .guide-group.song .guide-title{color:#a21caf;}
   .guide-row{display:flex; gap:6px; align-items:flex-start; margin:2px 0;}
   .guide-row .g-emo{width:18px; text-align:center; flex:none;}
+  .guide-rule{margin-top:4px; padding-top:4px; border-top:1px dashed rgba(0,0,0,.12); font-weight:700;}
   .guide-note{color:var(--muted); font-size:.64rem; margin-top:2px; text-align:center;}
 
   .participants{
@@ -489,18 +491,21 @@
             <span id="btnGuideArrow">▲</span>
           </div>
           <div class="btn-guide-body">
-            <div class="guide-group pos">
-              <div class="guide-title">😊 긍정 → 모든 세션이 채워지면 ✅ 모집완료로 이동</div>
+            <div class="guide-group sess">
+              <div class="guide-title">🎸 세션 버튼 · 내가 맡을 세션에서 눌러요</div>
               <div class="guide-row"><span class="g-emo">👍</span><span><b>가능해요</b> · 바로 할 수 있어요</span></div>
               <div class="guide-row"><span class="g-emo">🙋</span><span><b>하고싶어요</b> · 꼭 하고 싶어요!</span></div>
               <div class="guide-row"><span class="g-emo">⏳</span><span><b>시간필요</b> · 하고싶긴 한데 어려워서 시간이 조금 필요해요</span></div>
+              <div class="guide-row"><span class="g-emo">🙅</span><span><b>너무 어려워요</b> · 이 세션은 못 해요</span></div>
+              <div class="guide-rule">👍🙋⏳ 모든 세션이 채워지면 → ✅ 모집완료로 이동<br>🙅 눌린 세션이 있으면 → ⏸️ 보류곡으로 이동</div>
             </div>
-            <div class="guide-group neg">
-              <div class="guide-title">😕 부정 → ⏸️ 보류곡으로 이동</div>
-              <div class="guide-row"><span class="g-emo">😐</span><span><b>별로예요</b> · 가능하지만 별로 하고싶지 않아요</span></div>
-              <div class="guide-row"><span class="g-emo">🙅</span><span><b>어려워요</b> · 너무 어려워요</span></div>
+            <div class="guide-group song">
+              <div class="guide-title">💬 곡 버튼 · 곡 정보 바로 아래, 곡 전체에 대한 마음이에요</div>
+              <div class="guide-row"><span class="g-emo">❤️</span><span><b>좋아요</b> · 이 곡 좋아요! (숫자만 올라가요)</span></div>
+              <div class="guide-row"><span class="g-emo">👎</span><span><b>별로에요</b> · 이 곡은 별로예요 (숫자만 올라가요)</span></div>
+              <div class="guide-rule">👎 별로에요가 2명 이상이면 → ⏸️ 보류곡으로 이동<br>어느 세션 사람이 눌렀는지는 알 수 없어요 (익명)</div>
             </div>
-            <div class="guide-note">⏳·😐 버튼 옆 숫자 = 그 버튼을 누른 사람 수 · 다시 누르면 취소돼요</div>
+            <div class="guide-note">같은 버튼을 다시 누르면 취소돼요</div>
           </div>
         </div>
         <div class="songs" id="songListActive"></div>
@@ -1322,7 +1327,8 @@ async function addSong(){
     celebrated:false,
     createdAt: Date.now(),
     recommendedBy: profile ? profile.name : '알 수 없음',
-    comments: []
+    comments: [],
+    likes: {}
   };
   songs.unshift(song);
   await saveSongs();
@@ -1400,12 +1406,13 @@ function sessionAggregateStatus(claimMap){
   if(vals.includes('green')) return 'green';
   if(vals.includes('red')) return 'red';
   if(vals.includes('later')) return 'later'; // ⏳ 하고싶지만 시간 필요 → 긍정(모집완료 쪽)
-  if(vals.length>0) return 'x';              // 🙅 너무 어려워요 / 😐 별로예요 → 부정(보류 쪽)
+  if(vals.length>0) return 'x';
   return 'none';
 }
-const STATUS_ICON = { green:'👍', red:'🙋', later:'⏳', meh:'😐', x:'🙅' };
-function countStatus(claimMap, status){
-  return Object.values(claimMap||{}).filter(v=>v===status).length;
+const STATUS_ICON = { green:'👍', red:'🙋', later:'⏳', x:'🙅' };
+const DISLIKE_HOLD_THRESHOLD = 2; // 별로에요 N명 이상이면 보류곡
+function reactionCount(song, type){
+  return Object.values(song.likes||{}).filter(v=>v===type).length;
 }
 function toggleBtnGuide(){
   const el = document.getElementById('btnGuide');
@@ -1423,6 +1430,7 @@ function applyBtnGuideState(){
   document.getElementById('btnGuideArrow').textContent = collapsed ? '▼' : '▲';
 }
 function isHold(song){
+  if(reactionCount(song,'dislike') >= DISLIKE_HOLD_THRESHOLD) return true;
   return song.neededSessions.some(s => sessionAggregateStatus(song.claims[s]) === 'x');
 }
 function isComplete(song){
@@ -1443,6 +1451,29 @@ async function setStatus(songId, session, status){
     delete song.claims[session][profile.name]; // toggle off
   } else {
     song.claims[session][profile.name]=status;
+  }
+  const wasComplete = song.celebrated;
+  await saveSongs();
+  render();
+  if(isComplete(song) && !wasComplete){
+    song.celebrated = true;
+    await saveSongs();
+    showCelebModal(song.title);
+    switchMainTab('complete');
+    render();
+  }
+}
+
+// 곡 단위 좋아요/별로에요 (세션 정보 없이 이름별 1표, 화면에는 숫자만 표시)
+async function setReaction(songId, type){
+  if(!profile){ openProfileModal(); return; }
+  const song = songs.find(s=>s.id===songId);
+  if(!song) return;
+  if(!song.likes) song.likes = {};
+  if(song.likes[profile.name]===type){
+    delete song.likes[profile.name]; // toggle off
+  } else {
+    song.likes[profile.name] = type;
   }
   const wasComplete = song.celebrated;
   await saveSongs();
@@ -1518,6 +1549,9 @@ function escapeHtml(str){
 function buildSongCard(song){
   const complete = isComplete(song);
   const hold = isHold(song);
+  const likeCnt = reactionCount(song,'like');
+  const dislikeCnt = reactionCount(song,'dislike');
+  const myReact = (profile && song.likes) ? song.likes[profile.name] : undefined;
   const isNew = !!song.createdAt && (Date.now() - song.createdAt < 24*60*60*1000);
   const vid = getYoutubeId(song.link);
   const card = document.createElement('div');
@@ -1555,6 +1589,10 @@ function buildSongCard(song){
         <button class="del-btn" onclick="deleteSong('${song.id}')">✕</button>
       </div>
     </div>
+    <div class="song-react">
+      <button class="react-btn like ${myReact==='like'?'on':''}" onclick="setReaction('${song.id}','like')">❤️ 좋아요 <b>${likeCnt}</b></button>
+      <button class="react-btn dislike ${myReact==='dislike'?'on':''}" onclick="setReaction('${song.id}','dislike')">👎 별로에요 <b>${dislikeCnt}</b></button>
+    </div>
     <div class="sess-grid" id="sess_${song.id}"></div>
     ${isAdmin ? `<div class="participants" id="part_${song.id}"></div>` : ''}
     <div class="comments">
@@ -1574,28 +1612,19 @@ function buildSongCard(song){
     const myStatus = profile ? claimMap[profile.name] : undefined;
     const item = document.createElement('div');
     item.className = 'sess-item';
-    const cntLater = countStatus(claimMap,'later');
-    const cntMeh = countStatus(claimMap,'meh');
-    const mk = (key, kind, emoji, label, title, count) => `
-      <button class="${kind} ${myStatus===key ? 'on-'+key : ''}" title="${title}" onclick="setStatus('${song.id}','${s}','${key}')">
-        <span class="emo">${emoji}</span>
-        <span class="lbl">${label}${count!==undefined ? `<b class="cnt ${count?'':'zero'}">${count}</b>` : ''}</span>
-      </button>`;
     item.innerHTML = `
-      <div class="sess-head">
-        <div class="sess-circle ${agg!=='none' ? 'stat-'+agg : ''}">
-          ${EMOJI[s]}
-          ${agg==='x' ? '<span class="x-badge">✕</span>' : ''}
-        </div>
-        <div class="sess-name">${s}</div>
+      <div class="sess-circle ${agg!=='none' ? 'stat-'+agg : ''}">
+        ${EMOJI[s]}
+        ${agg==='x' ? '<span class="x-badge">✕</span>' : ''}
       </div>
-      <div class="sess-actions">
-        ${mk('green','pos','👍','가능해요','가능해요 - 바로 할 수 있어요')}
-        ${mk('red','pos','🙋','하고싶어요','하고싶어요 - 꼭 하고 싶어요')}
-        ${mk('later','pos','⏳','시간필요','하고싶긴한데 어려워서 시간이 조금 필요해요', cntLater)}
-        <span class="sep"></span>
-        ${mk('meh','neg','😐','별로예요','가능하지만 별로 하고싶지 않아요', cntMeh)}
-        ${mk('x','neg','🙅','어려워요','너무 어려워요')}
+      <div class="sess-mid">
+        <div class="sess-name">${s}</div>
+        <div class="sess-actions">
+          <button class="${myStatus==='green'?'on-green':''}" title="가능해요" onclick="setStatus('${song.id}','${s}','green')">👍</button>
+          <button class="${myStatus==='red'?'on-red':''}" title="하고싶어요" onclick="setStatus('${song.id}','${s}','red')">🙋</button>
+          <button class="${myStatus==='later'?'on-later':''}" title="하고싶긴한데 어려워서 시간이 조금 필요해요" onclick="setStatus('${song.id}','${s}','later')">⏳</button>
+          <button class="${myStatus==='x'?'on-x':''}" title="너무 어려워요" onclick="setStatus('${song.id}','${s}','x')">🙅</button>
+        </div>
       </div>
     `;
     sessDiv.appendChild(item);
@@ -1719,6 +1748,7 @@ window.editSong = editSong;
 window.closeEditSongModal = closeEditSongModal;
 window.saveEditSong = saveEditSong;
 window.setStatus = setStatus;
+window.setReaction = setReaction;
 window.toggleBtnGuide = toggleBtnGuide;
 window.closeCelebModal = closeCelebModal;
 window.openAdminModal = openAdminModal;
